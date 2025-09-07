@@ -1,0 +1,29 @@
+import React from 'react';
+import { Shield } from 'lucide-react';
+
+const Header = () => {
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-md border-b border-white/10">
+      <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Shield className="w-8 h-8 text-purple-400" />
+          <span className="text-xl font-bold text-white">SafeTour</span>
+        </div>
+        <nav className="hidden md:flex items-center space-x-8">
+          <a href="#" className="text-white/80 hover:text-white transition-colors">Features</a>
+          <a href="#" className="text-white/80 hover:text-white transition-colors">Technology</a>
+          <a href="#" className="text-white/80 hover:text-white transition-colors">About</a>
+          <a href="#" className="text-white/80 hover:text-white transition-colors">Contact</a>
+        </nav>
+        <div className="flex items-center space-x-4">
+          <button className="text-white/80 hover:text-white transition-colors">Login</button>
+          <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
+            Sign Up
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Header;

@@ -1,33 +1,26 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import Navbar from './components/Navbar';
+import React from 'react';
+import Header from './components/Header';
 import HeroSection from './components/HeroSection';
-import FeatureHighlights from './components/FeatureHighlights';
 import AdvancedFeatures from './components/AdvancedFeatures';
-import StatsBar from './components/StatsBar';
+import StatsSection from './components/StatsSection';
 import TechnologyStack from './components/TechnologyStack';
-import WhyChoose from './components/WhyChoose';
+import WhyChooseSection from './components/WhyChooseSection';
 import CTASection from './components/CTASection';
 import Footer from './components/Footer';
 
-function App() {
-  const [count, setCount] = useState(0)
-
+const App = () => {
   return (
-    <div className="bg-gray-900 text-white">
-      <Navbar />
+    <div className="min-h-screen">
+      <Header />
       <HeroSection />
-      <FeatureHighlights />
       <AdvancedFeatures />
-      <StatsBar />
+      <StatsSection />
       <TechnologyStack />
-      <WhyChoose />
+      <WhyChooseSection />
       <CTASection />
       <Footer />
     </div>
   );
-}
+};
 
-export default App
+export default App;
