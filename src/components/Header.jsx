@@ -1,5 +1,6 @@
 import React from 'react';
-import { Shield } from 'lucide-react';
+import { Shield, MapPin, AlertTriangle, Monitor, Cpu, Smartphone, Cloud, Database, Globe, CheckCircle, Clock, Zap, Phone, Mail } from 'lucide-react';
+
 
 const Header = () => {
   return (
@@ -10,10 +11,22 @@ const Header = () => {
           <span className="text-xl font-bold text-white">SafeTour</span>
         </div>
         <nav className="hidden md:flex items-center space-x-8">
-          <a href="#" className="text-white/80 hover:text-white transition-colors">Features</a>
-          <a href="#" className="text-white/80 hover:text-white transition-colors">Technology</a>
-          <a href="#" className="text-white/80 hover:text-white transition-colors">About</a>
-          <a href="#" className="text-white/80 hover:text-white transition-colors">Contact</a>
+          <a href="#" className="text-white/80 hover:text-white transition-colors relative group">
+            Features
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-400 group-hover:w-full transition-all duration-300"></span>
+          </a>
+          <a href="#" className="text-white/80 hover:text-white transition-colors relative group">
+            Technology
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-400 group-hover:w-full transition-all duration-300"></span>
+          </a>
+          <a href="#" className="text-white/80 hover:text-white transition-colors relative group">
+            About
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-400 group-hover:w-full transition-all duration-300"></span>
+          </a>
+          <a href="#" className="text-white/80 hover:text-white transition-colors relative group">
+            Contact
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-purple-400 group-hover:w-full transition-all duration-300"></span>
+          </a>
         </nav>
         <div className="flex items-center space-x-4">
           <button className="text-white/80 hover:text-white transition-colors">Login</button>
