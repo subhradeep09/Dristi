@@ -1,0 +1,313 @@
+import React, { useState } from 'react';
+import { Download, AlertTriangle, Clock, CheckCircle, Search, Users, MapPin } from 'lucide-react';
+import StatCard from '../ui/StatCard';
+import Sidebar from '../Sidebar'; // ✅ Call your existing sidebar component
+
+const SOSHits = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [activeTab, setActiveTab] = useState('today');
+
+  const stats = [
+    {
+      title: 'Total SOS Alerts',
+      value: '124',
+      icon: AlertTriangle,
+      color: 'red',
+      subtitle: 'Last 30 days'
+    },
+    {
+      title: 'Pending Response',
+      value: '23',
+      icon: Clock,
+      color: 'yellow',
+      subtitle: 'Requires attention'
+    },
+    {
+      title: 'Resolved Cases',
+      value: '101',
+      icon: CheckCircle,
+      color: 'green',
+      subtitle: 'Successfully handled'
+    }
+  ];
+
+  const sosAlerts = [
+    {
+      id: 1,
+      touristId: 'TG001234',
+      name: 'John Smith',
+      avatar: 'JS',
+      location: 'Mount Everest Base Camp',
+      alertTime: '2 mins ago',
+      status: 'pending',
+      severity: 'high',
+      coordinates: '27.9881°N, 86.9250°E'
+    },
+    {
+      id: 2,
+      touristId: 'TG001235',
+      name: 'Sarah Johnson',
+      avatar: 'SJ',
+      location: 'Tiger Reserve Zone B',
+      alertTime: '15 mins ago',
+      status: 'responded',
+      severity: 'medium',
+      coordinates: '28.7041°N, 77.1025°E'
+    },
+    {
+      id: 3,
+      touristId: 'TG001236',
+      name: 'Mike Chen',
+      avatar: 'MC',
+      location: 'Restricted Valley Area',
+      alertTime: '1 hour ago',
+      status: 'resolved',
+      severity: 'low',
+      coordinates: '28.3949°N, 84.1240°E'
+    },
+    {
+      id: 4,
+      touristId: 'TG001237',
+      name: 'Emma Davis',
+      avatar: 'ED',
+      location: 'Northern Trek Route',
+      alertTime: '2 hours ago',
+      status: 'pending',
+      severity: 'high',
+      coordinates: '28.2380°N, 83.9956°E'
+    },
+    {
+      id: 5,
+      touristId: 'TG001238',
+      name: 'Alex Kumar',
+      avatar: 'AK',
+      location: 'Wildlife Sanctuary',
+      alertTime: '3 hours ago',
+      status: 'responded',
+      severity: 'medium',
+      coordinates: '27.7172°N, 85.3240°E'
+    }
+  ];
+
+  const getStatusBadge = (status) => {
+    const styles = {
+      pending: 'bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium',
+      responded: 'bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-medium',
+      resolved: 'bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium'
+    };
+    return styles[status] || styles.pending;
+  };
+
+  const getSeverityBadge = (severity) => {
+    const styles = {
+      high: 'bg-red-500 text-white px-2 py-1 rounded text-xs font-medium',
+      medium: 'bg-yellow-500 text-white px-2 py-1 rounded text-xs font-medium',
+      low: 'bg-green-500 text-white px-2 py-1 rounded text-xs font-medium'
+    };
+    return styles[severity] || styles.medium;
+  };
+
+  const filteredAlerts = sosAlerts.filter(alert => {
+    const matchesSearch = alert.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      alert.touristId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      alert.location.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || alert.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  return (
+    <div className="flex">
+      {/* ✅ Sidebar */}
+      <Sidebar />
+
+      {/* Main Content */}
+      <div className="flex-1 p-8 space-y-6">
+        {/* Page Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">SOS Alerts</h1>
+            <p className="text-gray-600 mt-1">Monitor and respond to emergency alerts from tourists.</p>
+          </div>
+          <div className="flex gap-3">
+            <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+              <Download className="w-4 h-4" />
+              Export Report
+            </button>
+            <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+              <AlertTriangle className="w-4 h-4" />
+              Enable Alerts
+            </button>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {stats.map((stat, index) => (
+            <StatCard
+              key={index}
+              title={stat.title}
+              value={stat.value}
+              icon={stat.icon}
+              color={stat.color}
+              subtitle={stat.subtitle}
+            />
+          ))}
+        </div>
+
+        {/* SOS Alerts Table */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-900">Emergency Alerts</h2>
+            </div>
+
+            {/* Tabs and Filters */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex border-b border-gray-200">
+                <button
+                  onClick={() => setActiveTab('today')}
+                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'today'
+                    ? 'border-red-500 text-red-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  Today
+                </button>
+                <button
+                  onClick={() => setActiveTab('week')}
+                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'week'
+                    ? 'border-red-500 text-red-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  This Week
+                </button>
+                <button
+                  onClick={() => setActiveTab('month')}
+                  className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'month'
+                    ? 'border-red-500 text-red-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  This Month
+                </button>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Search alerts..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  />
+                </div>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="responded">Responded</option>
+                  <option value="resolved">Resolved</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="text-left py-3 px-6 font-medium text-gray-700">TOURIST INFO</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-700">LOCATION</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-700">ALERT TIME</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-700">STATUS</th>
+                  <th className="text-left py-3 px-6 font-medium text-gray-700">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {filteredAlerts.map((alert) => (
+                  <tr key={alert.id} className="hover:bg-gray-50">
+                    <td className="py-4 px-6">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                          {alert.avatar}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{alert.name}</p>
+                          <p className="text-sm text-gray-500">{alert.touristId}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div>
+                        <p className="font-medium text-gray-900">{alert.location}</p>
+                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {alert.coordinates}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6 text-gray-600">{alert.alertTime}</td>
+                    <td className="py-4 px-6">
+                      <div className="flex flex-col gap-1">
+                        <span className={getStatusBadge(alert.status)}>
+                          {alert.status}
+                        </span>
+                        <span className={getSeverityBadge(alert.severity)}>
+                          {alert.severity}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <div className="flex space-x-2">
+                        <button className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-sm hover:bg-blue-200 flex items-center gap-1">
+                          <Users className="w-3 h-3" />
+                          Assign Unit
+                        </button>
+                        <button className="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-sm hover:bg-green-200 flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          Resolve
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="p-6 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-700">Showing 1 to 5 of 23 alerts</p>
+              <div className="flex space-x-2">
+                <button className="px-3 py-1 text-sm border border-gray-200 rounded hover:bg-gray-50">
+                  Previous
+                </button>
+                <button className="px-3 py-1 text-sm bg-red-600 text-white rounded">1</button>
+                <button className="px-3 py-1 text-sm border border-gray-200 rounded hover:bg-gray-50">
+                  2
+                </button>
+                <button className="px-3 py-1 text-sm border border-gray-200 rounded hover:bg-gray-50">
+                  3
+                </button>
+                <button className="px-3 py-1 text-sm border border-gray-200 rounded hover:bg-gray-50">
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SOSHits;

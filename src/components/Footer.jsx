@@ -17,7 +17,7 @@ const Footer = () => {
           <div>
             <div className="flex items-center space-x-2 mb-6">
               <Shield className="w-8 h-8 text-purple-400" />
-              <span className="text-xl font-bold text-white">SafeTour</span>
+              <span className="text-xl font-bold text-white">DrisTi</span>
             </div>
             <p className="text-gray-400 mb-6 leading-relaxed">
               Leading the future of tourist safety with AI-powered monitoring and emergency response systems.
@@ -66,7 +66,7 @@ const Footer = () => {
               </li>
               <li className="flex items-center gap-3 text-gray-400 hover:text-purple-400 transition-colors duration-300">
                 <Mail className="w-4 h-4" />
-                <span>support@safetour.com</span>
+                <span>support@DrisTi.com</span>
               </li>
               <li className="flex items-center gap-3 text-gray-400 hover:text-purple-400 transition-colors duration-300">
                 <MapPin className="w-4 h-4" />
@@ -79,7 +79,7 @@ const Footer = () => {
         <div className="border-t border-gray-800 pt-8 mt-12">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-gray-400 text-center md:text-left">
-              © 2024 SafeTour. All rights reserved.
+              © 2024 DrisTi. All rights reserved.
             </p>
             <div className="flex flex-wrap gap-6">
               <a href="#" className="text-gray-400 hover:text-purple-400 transition-colors duration-300">Privacy Policy</a>

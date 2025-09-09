@@ -61,12 +61,12 @@ const HeroSection = () => {
           {/* Enhanced CTA buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center mb-20">
             <button className="group relative bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300 transform hover:scale-105 shadow-2xl">
-              <span className="relative z-10">Get Started</span>
+              <span className="relative z-10">Tourist Registration</span>
               <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur-lg opacity-50 group-hover:opacity-75 transition duration-300"></div>
             </button>
             <button className="group bg-white/10 hover:bg-white/20 text-white px-10 py-5 rounded-2xl font-bold text-lg transition-all duration-300 border-2 border-white/30 hover:border-white/50 backdrop-blur-sm">
               <span className="flex items-center gap-2">
-                Watch Demo
+                Admin Login
                 <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                 </svg>

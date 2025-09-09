@@ -8,7 +8,7 @@ const Header = () => {
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Shield className="w-8 h-8 text-purple-400" />
-          <span className="text-xl font-bold text-white">SafeTour</span>
+          <span className="text-xl font-bold text-white">DrisTi</span>
         </div>
         <nav className="hidden md:flex items-center space-x-8">
           <a href="#" className="text-white/80 hover:text-white transition-colors relative group">
@@ -29,9 +29,9 @@ const Header = () => {
           </a>
         </nav>
         <div className="flex items-center space-x-4">
-          <button className="text-white/80 hover:text-white transition-colors">Login</button>
+          <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">Register Tourist</button>
           <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
-            Sign Up
+            Admin Login
           </button>
         </div>
       </div>
