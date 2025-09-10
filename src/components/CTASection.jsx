@@ -25,7 +25,7 @@ const CTASection = () => {
           Ready to Transform Tourist Safety?
         </h2>
         <p className="text-xl text-white/90 mb-12 max-w-4xl mx-auto leading-relaxed">
-          Join thousands of destinations already using DrisTi to protect their visitors 
+          Join thousands of destinations already using DrishTi to protect their visitors 
           and enhance their travel experience with cutting-edge technology.
         </p>
         

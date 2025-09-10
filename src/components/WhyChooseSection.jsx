@@ -15,7 +15,7 @@ const WhyChooseSection = () => {
         <div className="flex flex-col lg:flex-row items-center gap-16">
           <div className="flex-1">
             <h2 className="text-5xl md:text-6xl font-bold text-white mb-8">
-              Why Choose <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">DrisTi?</span>
+              Why Choose <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">DrishTi?</span>
             </h2>
             <p className="text-xl text-gray-300 mb-12 leading-relaxed">
               Advanced tourist safety management platform with cutting-edge technology and proven results across multiple destinations.

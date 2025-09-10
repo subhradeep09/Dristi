@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="eyeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="pupilGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e293b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="15" fill="url(#eyeGradient)" stroke="#ffffff" stroke-width="1"/>
+  
+  <!-- Eye shape -->
+  <ellipse cx="16" cy="16" rx="11" ry="7" fill="#ffffff" opacity="0.95"/>
+  
+  <!-- Iris -->
+  <ellipse cx="16" cy="16" rx="6" ry="6" fill="url(#eyeGradient)" opacity="0.8"/>
+  
+  <!-- Pupil -->
+  <circle cx="16" cy="16" r="3" fill="url(#pupilGradient)"/>
+  
+  <!-- Highlight -->
+  <circle cx="17" cy="14" r="1.5" fill="#ffffff" opacity="0.9"/>
+  
+  <!-- Tech elements -->
+  <rect x="6" y="15.5" width="3" height="1" fill="#06b6d4" opacity="0.6" rx="0.5"/>
+  <rect x="23" y="15.5" width="3" height="1" fill="#06b6d4" opacity="0.6" rx="0.5"/>
+  <rect x="15.5" y="6" width="1" height="3" fill="#8b5cf6" opacity="0.6" rx="0.5"/>
+  <rect x="15.5" y="23" width="1" height="3" fill="#8b5cf6" opacity="0.6" rx="0.5"/>
+</svg>
