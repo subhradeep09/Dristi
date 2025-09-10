@@ -1,6 +1,18 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Phone } from 'lucide-react';
 
 const CTASection = () => {
+  const navigate = useNavigate();
+
+  const handleTouristRegistration = () => {
+    navigate('/register');
+  };
+
+  const handleAdminLogin = () => {
+    navigate('/admin-login');
+  };
+
   return (
     <section className="py-24 bg-gradient-to-r from-purple-600 to-blue-600 relative overflow-hidden">
       <div className="absolute inset-0 opacity-10">
@@ -18,13 +30,19 @@ const CTASection = () => {
         </p>
         
         <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16">
-          <button className="group bg-white text-purple-600 px-10 py-5 rounded-2xl font-bold text-lg hover:bg-gray-100 transition-all duration-300 shadow-2xl hover:shadow-3xl transform hover:scale-105">
+          <button 
+            onClick={handleTouristRegistration}
+            className="group bg-white text-purple-600 px-10 py-5 rounded-2xl font-bold text-lg hover:bg-gray-100 transition-all duration-300 shadow-2xl hover:shadow-3xl transform hover:scale-105"
+          >
             <span className="flex items-center justify-center gap-2">
               Tourist Registration
               <span className="group-hover:translate-x-1 transition-transform"></span>
             </span>
           </button>
-          <button className="group bg-transparent border-2 border-white text-white px-10 py-5 rounded-2xl font-bold text-lg hover:bg-white hover:text-purple-600 transition-all duration-300">
+          <button 
+            onClick={handleAdminLogin}
+            className="group bg-transparent border-2 border-white text-white px-10 py-5 rounded-2xl font-bold text-lg hover:bg-white hover:text-purple-600 transition-all duration-300"
+          >
             <span className="flex items-center justify-center gap-2">
               Admin Login
               

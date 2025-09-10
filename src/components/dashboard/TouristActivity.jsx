@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Download, Users, UserCheck, Users2, Search, Filter, Eye, MapPin, Phone } from 'lucide-react';
-import StatCard from '../ui/StatCard';
+import StatCard from './StatCard';
 
 const TouristActivity = () => {
   const [searchTerm, setSearchTerm] = useState('');

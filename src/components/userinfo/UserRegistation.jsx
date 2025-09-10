@@ -1,7 +1,10 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { User, Phone, Mail, FileText, Calendar, MapPin } from "lucide-react";
 
 const UserRegistration = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-100 p-6">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl p-8">
@@ -175,13 +178,24 @@ const UserRegistration = () => {
           </div>
 
           {/* Submit Button */}
-          <div className="text-center">
+          <div className="text-center space-y-4">
             <button
               type="submit"
               className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium shadow-lg hover:opacity-90 transition"
             >
               Submit Registration
             </button>
+            
+            {/* Back to Home */}
+            <div>
+              <button 
+                type="button"
+                onClick={() => navigate('/')}
+                className="text-blue-600 hover:underline text-sm"
+              >
+                ← Back to Home
+              </button>
+            </div>
           </div>
         </form>
       </div>

@@ -1,7 +1,35 @@
-import React from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { User, Lock, LogIn } from "lucide-react";
 
 const AdminLogin = () => {
+  const navigate = useNavigate();
+  const [credentials, setCredentials] = useState({
+    username: '',
+    password: ''
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setCredentials(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Simple validation (you can implement proper authentication here)
+    if (credentials.username && credentials.password) {
+      // For demo purposes, accept any non-empty credentials
+      // In a real app, you'd validate against a backend
+      navigate('/dashboard');
+    } else {
+      alert('Please enter both username and password');
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="w-full max-w-md p-8 bg-white rounded-2xl shadow-xl">
@@ -17,8 +45,7 @@ const AdminLogin = () => {
         </div>
 
         {/* Form */}
-        <form className="mt-6 space-y-5">
-          {/* Username */}
+        <form onSubmit={handleSubmit} className="mt-6 space-y-5">{/* Username */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
               Username
@@ -29,6 +56,9 @@ const AdminLogin = () => {
               </span>
               <input
                 type="text"
+                name="username"
+                value={credentials.username}
+                onChange={handleInputChange}
                 placeholder="Enter your username"
                 className="w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -46,6 +76,9 @@ const AdminLogin = () => {
               </span>
               <input
                 type="password"
+                name="password"
+                value={credentials.password}
+                onChange={handleInputChange}
                 placeholder="Enter your password"
                 className="w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -82,6 +115,16 @@ const AdminLogin = () => {
           <a href="#" className="text-blue-600 hover:underline">
             Contact Support
           </a>
+        </p>
+        
+        {/* Back to Home */}
+        <p className="mt-4 text-center text-sm text-gray-600">
+          <button 
+            onClick={() => navigate('/')}
+            className="text-blue-600 hover:underline"
+          >
+            ← Back to Home
+          </button>
         </p>
       </div>
 

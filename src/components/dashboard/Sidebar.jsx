@@ -1,7 +1,18 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Shield, Home, Users, Map, AlertTriangle, MapPin, Menu } from 'lucide-react';
 
-const Sidebar = ({ collapsed, currentPage, onToggle, onNavigate }) => {
+const Sidebar = ({ collapsed, currentPage, onToggle }) => {
+  const navigate = useNavigate();
+  
+  const handleNavigation = (pageId) => {
+    if (pageId === 'dashboard') {
+      navigate('/dashboard');
+    } else {
+      navigate(`/dashboard/${pageId}`);
+    }
+  };
+  
   const menuItems = [
     { id: 'dashboard', icon: Home, label: 'Dashboard', active: currentPage === 'dashboard' },
     { id: 'tourist-activity', icon: Users, label: 'Tourist Activity', active: currentPage === 'tourist-activity' },
@@ -43,7 +54,7 @@ const Sidebar = ({ collapsed, currentPage, onToggle, onNavigate }) => {
             return (
               <li key={item.id}>
                 <button
-                  onClick={() => onNavigate && onNavigate(item.id)}
+                  onClick={() => handleNavigation(item.id)}
                   className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200 group ${
                     item.active
                       ? 'bg-purple-600 text-white shadow-lg'

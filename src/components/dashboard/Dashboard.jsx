@@ -1,6 +1,6 @@
 import React from 'react';
 import { Users, UserCheck, Users2, AlertTriangle, MapPin, TrendingUp, Settings, Eye } from 'lucide-react';
-import StatCard from '../ui/StatCard';
+import StatCard from './StatCard';
 
 const Dashboard = () => {
   // Sample data

@@ -1,7 +1,15 @@
 import React from 'react';
-import { Bell, Search, Settings, ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, Search, Settings, ChevronDown, LogOut } from 'lucide-react';
 
 const DashboardHeader = ({ title = "Dashboard", subtitle = "Here's what's happening with your tourist monitoring system today." }) => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Add any logout logic here (clear tokens, etc.)
+    navigate('/');
+  };
+
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -32,6 +40,15 @@ const DashboardHeader = ({ title = "Dashboard", subtitle = "Here's what's happen
           {/* Settings */}
           <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
             <Settings className="w-5 h-5" />
+          </button>
+
+          {/* Logout */}
+          <button 
+            onClick={handleLogout}
+            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5" />
           </button>
 
           {/* User Profile */}

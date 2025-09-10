@@ -1,8 +1,19 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Shield, MapPin, AlertTriangle, Monitor, Cpu, Smartphone, Cloud, Database, Globe, CheckCircle, Clock, Zap, Phone, Mail } from 'lucide-react';
 
 
 const Header = () => {
+  const navigate = useNavigate();
+
+  const handleAdminLogin = () => {
+    navigate('/admin-login');
+  };
+
+  const handleRegisterTourist = () => {
+    navigate('/register');
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-md border-b border-white/10">
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
@@ -29,8 +40,16 @@ const Header = () => {
           </a>
         </nav>
         <div className="flex items-center space-x-4">
-          <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">Register Tourist</button>
-          <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
+          <button 
+            onClick={handleRegisterTourist}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            Register Tourist
+          </button>
+          <button 
+            onClick={handleAdminLogin}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors"
+          >
             Admin Login
           </button>
         </div>

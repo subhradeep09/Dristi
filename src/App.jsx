@@ -1,25 +1,71 @@
 import React from 'react';
-import Header from './components/Header';
-import HeroSection from './components/HeroSection';
-import AdvancedFeatures from './components/AdvancedFeatures';
-import StatsSection from './components/StatsSection';
-import TechnologyStack from './components/TechnologyStack';
-import WhyChooseSection from './components/WhyChooseSection';
-import CTASection from './components/CTASection';
-import Footer from './components/Footer';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import LandingPage from './components/LandingPage';
+import AdminLogin from './components/adminlogin/AdminLogin';
+import Dashboard from './components/dashboard/Dashboard';
+import DashboardLayout from './components/dashboard/DashboardLayout';
+import UserRegistration from './components/userinfo/UserRegistation';
+import TouristActivity from './components/dashboard/TouristActivity';
+import SOSHits from './components/dashboard/SOSHits';
+import Heatmap from './components/dashboard/Heatmap';
+import GeoFencing from './components/dashboard/GeoFencing';
 
 const App = () => {
   return (
-    <div className="min-h-screen">
-      <Header />
-      <HeroSection />
-      <AdvancedFeatures />
-      <StatsSection />
-      <TechnologyStack />
-      <WhyChooseSection />
-      <CTASection />
-      <Footer />
-    </div>
+    <Router>
+      <Routes>
+        {/* Landing Page */}
+        <Route path="/" element={<LandingPage />} />
+        
+        {/* Admin Login */}
+        <Route path="/admin-login" element={<AdminLogin />} />
+        
+        {/* User Registration */}
+        <Route path="/register" element={<UserRegistration />} />
+        
+        {/* Dashboard Routes */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <DashboardLayout currentPage="dashboard">
+              <Dashboard />
+            </DashboardLayout>
+          } 
+        />
+        <Route 
+          path="/dashboard/tourist-activity" 
+          element={
+            <DashboardLayout currentPage="tourist-activity">
+              <TouristActivity />
+            </DashboardLayout>
+          } 
+        />
+        <Route 
+          path="/dashboard/sos-hits" 
+          element={
+            <DashboardLayout currentPage="sos-hits">
+              <SOSHits />
+            </DashboardLayout>
+          } 
+        />
+        <Route 
+          path="/dashboard/heatmap" 
+          element={
+            <DashboardLayout currentPage="heatmap">
+              <Heatmap />
+            </DashboardLayout>
+          } 
+        />
+        <Route 
+          path="/dashboard/geo-fencing" 
+          element={
+            <DashboardLayout currentPage="geo-fencing">
+              <GeoFencing />
+            </DashboardLayout>
+          } 
+        />
+      </Routes>
+    </Router>
   );
 };
 
