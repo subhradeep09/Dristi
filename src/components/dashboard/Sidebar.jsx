@@ -39,7 +39,7 @@ const Sidebar = ({ collapsed, currentPage, onToggle }) => {
           </div>
           {!collapsed && (
             <div>
-              <h2 className="font-bold text-lg">TourGuard</h2>
+              <h2 className="font-bold text-lg">DrishTi</h2>
               <p className="text-sm text-slate-400">Admin Portal</p>
             </div>
           )}
