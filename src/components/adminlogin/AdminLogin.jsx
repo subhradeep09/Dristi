@@ -20,13 +20,11 @@ const AdminLogin = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Simple validation (you can implement proper authentication here)
-    if (credentials.username && credentials.password) {
-      // For demo purposes, accept any non-empty credentials
-      // In a real app, you'd validate against a backend
+    // Hardcoded credentials for demo purposes
+    if (credentials.username === 'admin' && credentials.password === 'admin123') {
       navigate('/dashboard');
     } else {
-      alert('Please enter both username and password');
+      alert('Invalid username or password');
     }
   };
 
