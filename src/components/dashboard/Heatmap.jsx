@@ -1,11 +1,49 @@
 import React, { useState } from 'react';
 import { Download, RefreshCw, Calendar, Search } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default markers in Leaflet with React
+import L from 'leaflet';
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 const Heatmap = () => {
   const [dateRange, setDateRange] = useState('');
   const [touristId, setTouristId] = useState('');
   const [region, setRegion] = useState('all');
   const [activityType, setActivityType] = useState('all');
+
+  // Sample tourist location data with heatmap intensity
+  const touristData = [
+    { position: [28.7041, 77.1025], label: 'Wildlife Sanctuary', count: 45, region: 'forest' },
+    { position: [27.9881, 86.9250], label: 'Mountain Base Camp', count: 67, region: 'mountain' },
+    { position: [28.3949, 84.1240], label: 'Heritage Temple Area', count: 23, region: 'urban' },
+    { position: [28.2380, 83.9956], label: 'Trekking Route B4', count: 34, region: 'mountain' },
+    { position: [28.6139, 77.2090], label: 'City Center', count: 89, region: 'urban' },
+    { position: [27.7172, 85.3240], label: 'Valley View Point', count: 56, region: 'mountain' },
+  ];
+
+  // Filter data based on selected region
+  const filteredData = region === 'all' 
+    ? touristData 
+    : touristData.filter(item => item.region === region);
+
+  // Generate heat circles based on tourist count
+  const getHeatColor = (count) => {
+    if (count > 60) return '#ff0000'; // Red for high density
+    if (count > 40) return '#ff7f00'; // Orange for medium-high
+    if (count > 20) return '#ffff00'; // Yellow for medium
+    return '#00ff00'; // Green for low density
+  };
+
+  const getHeatRadius = (count) => {
+    return Math.max(count * 100, 1000); // Base radius with scaling
+  };
 
   return (
     <div className="space-y-6">
@@ -98,28 +136,45 @@ const Heatmap = () => {
             <h2 className="text-lg font-semibold text-gray-900">Live Heatmap</h2>
           </div>
           <div className="p-6">
-            <div className="h-96 bg-gray-50 rounded-lg flex items-center justify-center relative">
-              {/* Map Placeholder */}
-              <div className="text-center text-gray-500">
-                <div className="w-20 h-20 mx-auto mb-4 text-6xl">
-                  🗺️
-                </div>
-                <h3 className="text-lg font-medium text-gray-700 mb-2">Heatmap will render here</h3>
-                <p className="text-sm text-gray-500">Integration with mapping service pending</p>
-              </div>
-              
-              {/* Map Controls */}
-              <div className="absolute top-4 right-4 flex flex-col gap-2">
-                <button className="w-8 h-8 bg-white border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50 shadow-sm">
-                  <span className="text-lg font-bold text-gray-600">+</span>
-                </button>
-                <button className="w-8 h-8 bg-white border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50 shadow-sm">
-                  <span className="text-lg font-bold text-gray-600">−</span>
-                </button>
-                <button className="w-8 h-8 bg-white border border-gray-300 rounded flex items-center justify-center hover:bg-gray-50 shadow-sm">
-                  🎯
-                </button>
-              </div>
+            <div className="h-96 rounded-lg overflow-hidden">
+              <MapContainer 
+                center={[28.2, 84.5]} 
+                zoom={7} 
+                style={{ height: '100%', width: '100%' }}
+                className="rounded-lg"
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                />
+                
+                {/* Tourist markers with heatmap-style circles */}
+                {filteredData.map((tourist, index) => (
+                  <React.Fragment key={index}>
+                    {/* Heat circle */}
+                    <Circle
+                      center={tourist.position}
+                      radius={getHeatRadius(tourist.count)}
+                      pathOptions={{
+                        color: getHeatColor(tourist.count),
+                        fillColor: getHeatColor(tourist.count),
+                        fillOpacity: 0.3,
+                        opacity: 0.6
+                      }}
+                    />
+                    {/* Marker */}
+                    <Marker position={tourist.position}>
+                      <Popup>
+                        <div className="text-center">
+                          <h4 className="font-semibold">{tourist.label}</h4>
+                          <p className="text-sm text-gray-600">Tourists: {tourist.count}</p>
+                          <p className="text-xs text-gray-500">Region: {tourist.region}</p>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  </React.Fragment>
+                ))}
+              </MapContainer>
             </div>
           </div>
         </div>
