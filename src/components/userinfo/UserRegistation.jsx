@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Phone, Mail, FileText, Calendar, MapPin } from "lucide-react";
+import { User, Phone, Mail, FileText, Calendar, MapPin, Smartphone } from "lucide-react";
 
 const UserRegistration = () => {
   const navigate = useNavigate();
@@ -15,13 +15,17 @@ const UserRegistration = () => {
     startDate: "",
     endDate: "",
     plannedLocations: "",
+    kavachDevice: false,
     emergencyContactName: "",
     emergencyContactPhone: "",
   });
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
   };
 
   const handleSubmit = (e) => {
@@ -218,6 +222,43 @@ const UserRegistration = () => {
                 ></textarea>
                 <p className="text-xs text-gray-400 text-right">0/500</p>
               </div>
+            </div>
+          </div>
+
+          {/* Device Assignment */}
+          <div>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+              <Smartphone className="w-5 h-5 text-purple-600" />
+              Device Assignment
+            </h2>
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="flex items-center gap-3">
+                <input
+                  name="kavachDevice"
+                  type="checkbox"
+                  checked={formData.kavachDevice}
+                  onChange={handleInputChange}
+                  className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Kavach IoT Device
+                  </label>
+                  <p className="text-xs text-gray-500">
+                    Check this box if you want to be assigned a Kavach IoT safety device for your trip
+                  </p>
+                </div>
+              </div>
+              {formData.kavachDevice && (
+                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-700 font-medium">
+                    📱 Kavach Device Selected
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">
+                    Your Kavach IoT safety device will be provided at check-in. This device includes GPS tracking, emergency SOS button, and real-time location monitoring for your safety.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
