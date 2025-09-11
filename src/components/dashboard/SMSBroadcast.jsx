@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { Send, Users, MessageSquare, Clock, CheckCircle, AlertTriangle, Filter, Search, Download } from 'lucide-react';
+import { useBroadcast } from '../../contexts/BroadcastContext';
 
 const SMSBroadcast = () => {
+  const { broadcastHistory, addBroadcast } = useBroadcast();
+  
   const [broadcastData, setBroadcastData] = useState({
     message: '',
     recipients: 'all',
@@ -21,37 +24,6 @@ const SMSBroadcast = () => {
     { id: 'TG001236', name: 'Mike Chen', location: 'Border Area 7', status: 'offline' },
     { id: 'TG001237', name: 'Emma Davis', location: 'Wildlife Sanctuary', status: 'online' },
     { id: 'TG001238', name: 'Alex Kumar', location: 'Valley Trek Route', status: 'online' }
-  ];
-
-  // Sample broadcast history
-  const broadcastHistory = [
-    {
-      id: 1,
-      message: 'Weather Alert: Heavy rainfall expected in mountain regions. Please take shelter immediately.',
-      recipients: 1247,
-      priority: 'high',
-      status: 'delivered',
-      sentAt: '2 hours ago',
-      deliveryRate: 98.5
-    },
-    {
-      id: 2,
-      message: 'Safety reminder: Please check in every 6 hours when in remote areas.',
-      recipients: 2341,
-      priority: 'medium',
-      status: 'delivered',
-      sentAt: '1 day ago',
-      deliveryRate: 97.2
-    },
-    {
-      id: 3,
-      message: 'Route closure: Trek Route B-4 temporarily closed for maintenance.',
-      recipients: 856,
-      priority: 'high',
-      status: 'delivered',
-      sentAt: '2 days ago',
-      deliveryRate: 99.1
-    }
   ];
 
   const handleInputChange = (field, value) => {
@@ -81,6 +53,22 @@ const SMSBroadcast = () => {
     
     // Simulate API call
     setTimeout(() => {
+      // Add broadcast to context
+      const newBroadcast = {
+        id: Date.now(),
+        icon: MessageSquare,
+        title: `${broadcastData.priority.charAt(0).toUpperCase() + broadcastData.priority.slice(1)} Priority Broadcast`,
+        message: broadcastData.message,
+        time: 'Just now',
+        priority: broadcastData.priority,
+        recipientsCount: getRecipientCount(),
+        status: 'delivered',
+        sentAt: 'Just now',
+        deliveryRate: 98.5
+      };
+      
+      addBroadcast(newBroadcast);
+      
       setIsSending(false);
       alert('Broadcast sent successfully!');
       setBroadcastData({
@@ -366,7 +354,7 @@ const SMSBroadcast = () => {
                         <p className="text-sm text-gray-900 line-clamp-2">{broadcast.message}</p>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {broadcast.recipients.toLocaleString()}
+                        {broadcast.recipientsCount?.toLocaleString() || broadcast.recipients?.toLocaleString() || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityBadge(broadcast.priority)}`}>
@@ -374,15 +362,15 @@ const SMSBroadcast = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(broadcast.status)}`}>
-                          {broadcast.status}
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(broadcast.status || 'delivered')}`}>
+                          {broadcast.status || 'delivered'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {broadcast.deliveryRate}%
+                        {broadcast.deliveryRate || 98.5}%
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {broadcast.sentAt}
+                        {broadcast.time || broadcast.sentAt || 'N/A'}
                       </td>
                     </tr>
                   ))}
@@ -404,21 +392,21 @@ const SMSBroadcast = () => {
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
                       <span className="text-gray-500">Recipients:</span>
-                      <span className="ml-1 text-gray-900 font-medium">{broadcast.recipients.toLocaleString()}</span>
+                      <span className="ml-1 text-gray-900 font-medium">{(broadcast.recipientsCount || broadcast.recipients || 0).toLocaleString()}</span>
                     </div>
                     <div>
                       <span className="text-gray-500">Delivery:</span>
-                      <span className="ml-1 text-gray-900 font-medium">{broadcast.deliveryRate}%</span>
+                      <span className="ml-1 text-gray-900 font-medium">{broadcast.deliveryRate || 98.5}%</span>
                     </div>
                     <div>
                       <span className="text-gray-500">Status:</span>
-                      <span className={`ml-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(broadcast.status)}`}>
-                        {broadcast.status}
+                      <span className={`ml-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(broadcast.status || 'delivered')}`}>
+                        {broadcast.status || 'delivered'}
                       </span>
                     </div>
                     <div>
                       <span className="text-gray-500">Sent:</span>
-                      <span className="ml-1 text-gray-900">{broadcast.sentAt}</span>
+                      <span className="ml-1 text-gray-900">{broadcast.time || broadcast.sentAt || 'N/A'}</span>
                     </div>
                   </div>
                 </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BroadcastProvider } from './contexts/BroadcastContext';
 import LandingPage from './components/LandingPage';
 import AdminLogin from './components/adminlogin/AdminLogin';
 import Dashboard from './components/dashboard/Dashboard';
@@ -13,8 +14,9 @@ import GeoFencing from './components/dashboard/GeoFencing';
 
 const App = () => {
   return (
-    <Router>
-      <Routes>
+    <BroadcastProvider>
+      <Router>
+        <Routes>
         {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
         
@@ -74,7 +76,8 @@ const App = () => {
           } 
         />
       </Routes>
-    </Router>
+      </Router>
+    </BroadcastProvider>
   );
 };
 
