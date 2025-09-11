@@ -8,6 +8,7 @@ import UserRegistration from './components/userinfo/UserRegistation';
 import TouristActivity from './components/dashboard/TouristActivity';
 import SOSHits from './components/dashboard/SOSHits';
 import Heatmap from './components/dashboard/Heatmap';
+import SMSBroadcast from './components/dashboard/SMSBroadcast';
 import GeoFencing from './components/dashboard/GeoFencing';
 
 const App = () => {
@@ -53,6 +54,14 @@ const App = () => {
           element={
             <DashboardLayout currentPage="heatmap">
               <Heatmap />
+            </DashboardLayout>
+          } 
+        />
+        <Route 
+          path="/dashboard/sms-broadcast" 
+          element={
+            <DashboardLayout currentPage="sms-broadcast">
+              <SMSBroadcast />
             </DashboardLayout>
           } 
         />

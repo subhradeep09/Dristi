@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Home, Users, Map, AlertTriangle, MapPin, Menu } from 'lucide-react';
+import { Shield, Home, Users, Map, AlertTriangle, MapPin, Menu, MessageSquare } from 'lucide-react';
 
 const Sidebar = ({ collapsed, currentPage, mobileMenuOpen, onToggle, onMobileToggle }) => {
   const navigate = useNavigate();
@@ -22,6 +22,7 @@ const Sidebar = ({ collapsed, currentPage, mobileMenuOpen, onToggle, onMobileTog
     { id: 'tourist-activity', icon: Users, label: 'Tourist Activity', active: currentPage === 'tourist-activity' },
     { id: 'heatmap', icon: Map, label: 'Heatmap', active: currentPage === 'heatmap' },
     { id: 'sos-hits', icon: AlertTriangle, label: 'SOS Hits', active: currentPage === 'sos-hits' },
+    { id: 'sms-broadcast', icon: MessageSquare, label: 'SMS Broadcast', active: currentPage === 'sms-broadcast' },
     { id: 'geo-fencing', icon: MapPin, label: 'Geo-Fencing', active: currentPage === 'geo-fencing' }
   ];
 

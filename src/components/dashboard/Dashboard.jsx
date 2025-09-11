@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, UserCheck, Users2, AlertTriangle, MapPin, TrendingUp, Settings, Eye } from 'lucide-react';
+import { Users, UserCheck, Users2, AlertTriangle, MapPin, TrendingUp, Settings, Eye, Radio, Clock, MessageSquare } from 'lucide-react';
 import StatCard from './StatCard';
 
 const Dashboard = () => {
@@ -81,34 +81,78 @@ const Dashboard = () => {
     }
   ];
 
-  const systemNotifications = [
+  const broadcastHistory = [
     {
       id: 1,
-      icon: Users,
-      message: '15 new tourist registrations in the last hour',
-      time: '5 mins ago',
-      type: 'info'
+      icon: Radio,
+      title: 'Weather Alert Broadcast',
+      message: 'Heavy rainfall warning issued for mountain regions. All tourists advised to take shelter.',
+      time: '2 hours ago',
+      priority: 'high',
+      recipientsCount: 1247
     },
     {
       id: 2,
-      icon: AlertTriangle,
-      message: 'Suspicious activity detected in Zone Alpha-7',
-      time: '12 mins ago',
-      type: 'warning'
+      icon: MessageSquare,
+      title: 'Safety Guidelines Update',
+      message: 'New safety protocols for Tiger Reserve area. Please review updated guidelines.',
+      time: '6 hours ago',
+      priority: 'medium',
+      recipientsCount: 856
     },
     {
       id: 3,
-      icon: Settings,
-      message: 'Geo-fence boundary updated for Tiger Reserve',
-      time: '1 hour ago',
-      type: 'success'
+      icon: AlertTriangle,
+      title: 'Route Closure Notification',
+      message: 'Temporary closure of Trek Route B-4 due to maintenance work until further notice.',
+      time: '1 day ago',
+      priority: 'high',
+      recipientsCount: 2341
     },
     {
       id: 4,
-      icon: Users,
-      message: 'Tourist verification completed for 8 pending applications',
-      time: '2 hours ago',
-      type: 'info'
+      icon: Clock,
+      title: 'Daily Check-in Reminder',
+      message: 'Daily check-in reminder sent to all active tourists in remote areas.',
+      time: '1 day ago',
+      priority: 'low',
+      recipientsCount: 3478
+    },
+    {
+      id: 5,
+      icon: Radio,
+      title: 'Emergency Evacuation Alert',
+      message: 'Immediate evacuation required from Zone Alpha-7 due to landslide risk.',
+      time: '2 days ago',
+      priority: 'high',
+      recipientsCount: 567
+    },
+    {
+      id: 6,
+      icon: MessageSquare,
+      title: 'Equipment Check Reminder',
+      message: 'Please ensure your safety equipment is properly maintained and functional.',
+      time: '3 days ago',
+      priority: 'medium',
+      recipientsCount: 1892
+    },
+    {
+      id: 7,
+      icon: Clock,
+      title: 'Night Curfew Notice',
+      message: 'Night movement restricted in forest areas from 8 PM to 6 AM for safety.',
+      time: '4 days ago',
+      priority: 'medium',
+      recipientsCount: 2156
+    },
+    {
+      id: 8,
+      icon: AlertTriangle,
+      title: 'Wildlife Activity Alert',
+      message: 'Increased wildlife activity reported. Maintain safe distance and travel in groups.',
+      time: '5 days ago',
+      priority: 'high',
+      recipientsCount: 1423
     }
   ];
 
@@ -148,14 +192,13 @@ const Dashboard = () => {
     return styles[status] || styles.pending;
   };
 
-  const getNotificationIcon = (type) => {
+  const getNotificationIcon = (priority) => {
     const styles = {
-      info: 'text-blue-500',
-      warning: 'text-yellow-500',
-      success: 'text-green-500',
-      error: 'text-red-500'
+      high: 'text-red-500 bg-red-50',
+      medium: 'text-yellow-500 bg-yellow-50',
+      low: 'text-blue-500 bg-blue-50'
     };
-    return styles[type] || styles.info;
+    return styles[priority] || styles.low;
   };
 
   return (
@@ -208,26 +251,53 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* System Notifications */}
+        {/* Broadcast History */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">System Notifications</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Broadcast History</h2>
+              <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                View All
+              </button>
+            </div>
           </div>
-          <div className="p-6 space-y-4 max-h-96 overflow-y-auto">
-            {systemNotifications.map((notification) => {
-              const Icon = notification.icon;
+          <div className="p-6 space-y-3 max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+            {broadcastHistory.map((broadcast) => {
+              const Icon = broadcast.icon;
               return (
-                <div key={notification.id} className="flex items-start space-x-3">
-                  <div className={`p-2 rounded-lg ${getNotificationIcon(notification.type)}`}>
+                <div key={broadcast.id} className="flex items-start space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors">
+                  <div className={`p-2 rounded-lg ${getNotificationIcon(broadcast.priority)} flex-shrink-0`}>
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900">{notification.message}</p>
-                    <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+                    <div className="flex items-start justify-between mb-1 gap-2">
+                      <p className="text-sm font-medium text-gray-900 line-clamp-1">{broadcast.title}</p>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
+                        broadcast.priority === 'high' ? 'bg-red-100 text-red-800' :
+                        broadcast.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {broadcast.priority}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-2 line-clamp-2">{broadcast.message}</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-gray-500">{broadcast.time}</p>
+                      <p className="text-xs text-gray-500">
+                        {broadcast.recipientsCount.toLocaleString()} recipients
+                      </p>
+                    </div>
                   </div>
                 </div>
               );
             })}
+            {broadcastHistory.length > 6 && (
+              <div className="text-center pt-3 border-t border-gray-100">
+                <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                  Load More History
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
