@@ -10,26 +10,26 @@ const TechnologyStack = () => {
   ];
 
   return (
-    <section className="py-24 bg-white">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+    <section id="technology" className="py-16 sm:py-20 lg:py-24 bg-white">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-4 sm:mb-6">
             Technology <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">Stack</span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
             Built on modern, scalable technologies to ensure reliability, performance, and security at every level.
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
           {technologies.map((tech, index) => (
-            <div key={index} className="group bg-gray-50 hover:bg-white rounded-2xl p-8 text-center hover:shadow-2xl transition-all duration-500 border hover:border-purple-200 transform hover:scale-105">
-              <div className="text-5xl mb-6 group-hover:scale-110 transition-transform duration-300">
+            <div key={index} className="group bg-gray-50 hover:bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 text-center hover:shadow-2xl transition-all duration-500 border hover:border-purple-200 transform hover:scale-105">
+              <div className="text-4xl sm:text-5xl mb-4 sm:mb-6 group-hover:scale-110 transition-transform duration-300">
                 {tech.icon}
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-3">{tech.name}</h3>
-              <p className="text-gray-600 mb-4">{tech.description}</p>
-              <div className={`w-full h-2 bg-gradient-to-r ${tech.color} rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">{tech.name}</h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4 leading-relaxed">{tech.description}</p>
+              <div className={`w-full h-1.5 sm:h-2 bg-gradient-to-r ${tech.color} rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
             </div>
           ))}
         </div>

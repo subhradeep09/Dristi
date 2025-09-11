@@ -48,26 +48,28 @@ const Heatmap = () => {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tourist Heatmap</h1>
-          <p className="text-gray-600 mt-1">Real-time visualization of tourist distribution and activity zones.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Tourist Heatmap</h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">Real-time visualization of tourist distribution and activity zones.</p>
         </div>
-        <div className="flex gap-3">
-          <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm">
             <Download className="w-4 h-4" />
-            Export Data
+            <span className="hidden sm:inline">Export Data</span>
+            <span className="sm:hidden">Export</span>
           </button>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm">
             <RefreshCw className="w-4 h-4" />
-            Refresh Map
+            <span className="hidden sm:inline">Refresh Map</span>
+            <span className="sm:hidden">Refresh</span>
           </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
             <div className="relative">
@@ -132,11 +134,11 @@ const Heatmap = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Map Area */}
         <div className="lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-4 sm:p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Live Heatmap</h2>
           </div>
-          <div className="p-6">
-            <div className="h-96 rounded-lg overflow-hidden">
+          <div className="p-4 sm:p-6">
+            <div className="h-64 sm:h-80 lg:h-96 rounded-lg overflow-hidden">
               <MapContainer 
                 center={[28.2, 84.5]} 
                 zoom={7} 
@@ -180,22 +182,22 @@ const Heatmap = () => {
         </div>
 
         {/* Sidebar Stats */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Active Tourists */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Active Tourists</h3>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Active Tourists</h3>
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-1">2,847</div>
-              <p className="text-sm text-gray-500">Currently tracked</p>
+              <div className="text-2xl sm:text-3xl font-bold text-blue-600 mb-1">2,847</div>
+              <p className="text-xs sm:text-sm text-gray-500">Currently tracked</p>
             </div>
           </div>
 
           {/* Busiest Region */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Busiest Region</h3>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Busiest Region</h3>
             <div>
-              <div className="text-xl font-bold text-green-600 mb-1">Mountain Zone</div>
-              <p className="text-sm text-gray-500 mb-2">847 tourists present</p>
+              <div className="text-lg sm:text-xl font-bold text-green-600 mb-1">Mountain Zone</div>
+              <p className="text-xs sm:text-sm text-gray-500 mb-2">847 tourists present</p>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div className="bg-green-500 h-2 rounded-full" style={{ width: '65%' }}></div>
               </div>
@@ -203,52 +205,52 @@ const Heatmap = () => {
           </div>
 
           {/* Tourist Density Legend */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Tourist Density</h3>
-            <div className="space-y-3">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Tourist Density</h3>
+            <div className="space-y-2 sm:space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-green-500 rounded"></div>
-                  <span className="text-sm text-gray-700">High</span>
+                  <span className="text-xs sm:text-sm text-gray-700">High</span>
                 </div>
-                <span className="text-sm text-gray-500">50+ tourists</span>
+                <span className="text-xs sm:text-sm text-gray-500">50+ tourists</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-yellow-500 rounded"></div>
-                  <span className="text-sm text-gray-700">Medium</span>
+                  <span className="text-xs sm:text-sm text-gray-700">Medium</span>
                 </div>
-                <span className="text-sm text-gray-500">20-49 tourists</span>
+                <span className="text-xs sm:text-sm text-gray-500">20-49 tourists</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-red-500 rounded"></div>
-                  <span className="text-sm text-gray-700">Low</span>
+                  <span className="text-xs sm:text-sm text-gray-700">Low</span>
                 </div>
-                <span className="text-sm text-gray-500">1-19 tourists</span>
+                <span className="text-xs sm:text-sm text-gray-500">1-19 tourists</span>
               </div>
             </div>
           </div>
 
           {/* Quick Stats */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
-            <div className="space-y-3">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
+            <div className="space-y-2 sm:space-y-3">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Peak Hour</span>
-                <span className="text-sm font-medium text-gray-900">2:00 PM</span>
+                <span className="text-xs sm:text-sm text-gray-600">Peak Hour</span>
+                <span className="text-xs sm:text-sm font-medium text-gray-900">2:00 PM</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Most Visited</span>
-                <span className="text-sm font-medium text-gray-900">Viewpoint A</span>
+                <span className="text-xs sm:text-sm text-gray-600">Most Visited</span>
+                <span className="text-xs sm:text-sm font-medium text-gray-900">Viewpoint A</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Avg. Stay Time</span>
-                <span className="text-sm font-medium text-gray-900">4.5 hours</span>
+                <span className="text-xs sm:text-sm text-gray-600">Avg. Stay Time</span>
+                <span className="text-xs sm:text-sm font-medium text-gray-900">4.5 hours</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Satisfaction Rate</span>
-                <span className="text-sm font-medium text-green-600">94%</span>
+                <span className="text-xs sm:text-sm text-gray-600">Satisfaction Rate</span>
+                <span className="text-xs sm:text-sm font-medium text-green-600">94%</span>
               </div>
             </div>
           </div>

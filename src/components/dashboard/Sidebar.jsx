@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Home, Users, Map, AlertTriangle, MapPin, Menu } from 'lucide-react';
 
-const Sidebar = ({ collapsed, currentPage, onToggle }) => {
+const Sidebar = ({ collapsed, currentPage, mobileMenuOpen, onToggle, onMobileToggle }) => {
   const navigate = useNavigate();
   
   const handleNavigation = (pageId) => {
@@ -10,6 +10,10 @@ const Sidebar = ({ collapsed, currentPage, onToggle }) => {
       navigate('/dashboard');
     } else {
       navigate(`/dashboard/${pageId}`);
+    }
+    // Close mobile menu on navigation
+    if (onMobileToggle) {
+      onMobileToggle();
     }
   };
   
@@ -28,9 +32,40 @@ const Sidebar = ({ collapsed, currentPage, onToggle }) => {
   };
 
   return (
-    <div className={`fixed left-0 top-0 h-full bg-slate-800 text-white transition-all duration-300 z-50 ${
-      collapsed ? 'w-16' : 'w-64'
-    }`}>
+    <>
+      {/* Mobile Sidebar */}
+      <div className={`fixed left-0 top-0 h-full bg-slate-800 text-white transition-all duration-300 z-50 lg:hidden ${
+        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+      } w-64`}>
+        <SidebarContent 
+          collapsed={false}
+          menuItems={menuItems}
+          userInfo={userInfo}
+          handleNavigation={handleNavigation}
+          onToggle={onToggle}
+        />
+      </div>
+
+      {/* Desktop Sidebar */}
+      <div className={`fixed left-0 top-0 h-full bg-slate-800 text-white transition-all duration-300 z-50 hidden lg:block ${
+        collapsed ? 'w-16' : 'w-64'
+      }`}>
+        <SidebarContent 
+          collapsed={collapsed}
+          menuItems={menuItems}
+          userInfo={userInfo}
+          handleNavigation={handleNavigation}
+          onToggle={onToggle}
+        />
+      </div>
+    </>
+  );
+};
+
+// Extracted sidebar content component to avoid duplication
+const SidebarContent = ({ collapsed, menuItems, userInfo, handleNavigation, onToggle }) => {
+  return (
+    <>
       {/* Header */}
       <div className="p-4 border-b border-slate-700">
         <div className="flex items-center gap-3">
@@ -90,14 +125,14 @@ const Sidebar = ({ collapsed, currentPage, onToggle }) => {
         </div>
       </div>
 
-      {/* Toggle Button */}
+      {/* Toggle Button - Only show on desktop */}
       <button
         onClick={onToggle}
-        className="absolute -right-3 top-6 w-6 h-6 bg-slate-800 border border-slate-600 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+        className="absolute -right-3 top-6 w-6 h-6 bg-slate-800 border border-slate-600 rounded-full items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-colors hidden lg:flex"
       >
         <Menu className="w-3 h-3" />
       </button>
-    </div>
+    </>
   );
 };
 

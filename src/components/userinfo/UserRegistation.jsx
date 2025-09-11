@@ -44,27 +44,27 @@ const UserRegistration = () => {
     navigate("/");
   };
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-100 p-6">
-      <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-100 p-4 sm:p-6">
+      <div className="w-full max-w-4xl bg-white rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-6 lg:p-8">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold text-purple-700">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-purple-700">
             Registration Form
           </h1>
-          <p className="text-gray-500">
+          <p className="text-sm sm:text-base text-gray-500 mt-2">
             Complete your registration with secure and encrypted data processing
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
           {/* Personal Information */}
           <div>
-            <h2 className="flex items-center text-lg font-semibold text-blue-700 mb-4">
-              <User className="mr-2 text-blue-600" /> Personal Information
+            <h2 className="flex items-center text-base sm:text-lg font-semibold text-blue-700 mb-3 sm:mb-4">
+              <User className="mr-2 text-blue-600 w-4 h-4 sm:w-5 sm:h-5" /> Personal Information
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Full Name *
                 </label>
                 <input
@@ -74,11 +74,11 @@ const UserRegistration = () => {
                   type="text"
                   placeholder="Enter your complete name"
                   required
-                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500"
+                  className="w-full border rounded-lg px-3 py-2.5 text-sm sm:text-base focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Age *
                 </label>
                 <input
@@ -88,7 +88,7 @@ const UserRegistration = () => {
                   type="number"
                   placeholder="Enter your age"
                   required
-                  className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500"
+                  className="w-full border rounded-lg px-3 py-2.5 text-sm sm:text-base focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
               </div>
               <div>

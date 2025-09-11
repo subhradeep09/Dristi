@@ -41,42 +41,44 @@ const AdvancedFeatures = () => {
   ];
 
   return (
-    <section className="py-24 bg-gradient-to-b from-gray-50 to-white">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-20">
+    <section id="features" className="py-16 sm:py-20 lg:py-24 bg-gradient-to-b from-gray-50 to-white">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="text-center mb-16 sm:mb-20">
           <div className="inline-flex items-center justify-center px-4 py-2 bg-purple-100 rounded-full text-purple-700 font-medium mb-4">
             ✨ Advanced Technology
           </div>
-          <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
             Advanced Safety <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">Features</span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed px-4">
             Comprehensive technology stack designed to enhance tourist safety through intelligent 
             monitoring and rapid response systems powered by cutting-edge AI.
           </p>
         </div>
         
-        <div className="max-w-7xl mx-auto space-y-24">
+        <div className="max-w-7xl mx-auto space-y-16 sm:space-y-20 lg:space-y-24">
           {features.map((feature, index) => (
-            <div key={index} className={`flex flex-col ${index % 2 === 1 ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-12`}>
-              <div className="flex-1 space-y-6">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className={`w-16 h-16 bg-gradient-to-br ${feature.gradient} rounded-2xl flex items-center justify-center shadow-lg`}>
-                    {feature.icon}
+            <div key={index} className={`flex flex-col ${index % 2 === 1 ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-8 sm:gap-10 lg:gap-12`}>
+              <div className="flex-1 space-y-4 sm:space-y-6 text-center lg:text-left">
+                <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6 justify-center lg:justify-start">
+                  <div className={`w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-gradient-to-br ${feature.gradient} rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg`}>
+                    <div className="scale-75 sm:scale-90 lg:scale-100">
+                      {feature.icon}
+                    </div>
                   </div>
-                  <div className="w-12 h-1 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full"></div>
-                  <div className="bg-purple-100 px-4 py-2 rounded-full">
+                  <div className="w-8 sm:w-10 lg:w-12 h-1 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full hidden sm:block"></div>
+                  <div className="bg-purple-100 px-3 py-1 sm:px-4 sm:py-2 rounded-full">
                     <span className="text-purple-700 font-semibold text-sm">0{index + 1}</span>
                   </div>
                 </div>
-                <h3 className="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
+                <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight">
                   {feature.title}
                 </h3>
-                <p className="text-lg text-gray-600 leading-relaxed max-w-2xl">
+                <p className="text-base sm:text-lg text-gray-600 leading-relaxed max-w-2xl mx-auto lg:mx-0">
                   {feature.description}
                 </p>
-                <div className="pt-4">
-                  <button className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-semibold transition-colors">
+                <div className="pt-2 sm:pt-4">
+                  <button className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 font-semibold transition-colors text-sm sm:text-base">
                     Learn More 
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -85,16 +87,16 @@ const AdvancedFeatures = () => {
                 </div>
               </div>
               
-              <div className="flex-1">
+              <div className="flex-1 w-full max-w-md lg:max-w-none">
                 <div className="relative group">
-                  <div className={`absolute -inset-4 bg-gradient-to-r ${feature.gradient} rounded-3xl blur-2xl opacity-25 group-hover:opacity-40 transition duration-1000`}></div>
-                  <div className="relative bg-white rounded-3xl p-2 shadow-2xl">
-                    <div className={`w-full h-80 bg-gradient-to-br ${feature.gradient} rounded-2xl flex items-center justify-center shadow-lg`}>
-                      <div className="text-center text-white">
-                        <div className="w-20 h-20 mx-auto mb-4 opacity-50">
+                  <div className={`absolute -inset-2 sm:-inset-4 bg-gradient-to-r ${feature.gradient} rounded-2xl sm:rounded-3xl blur-xl sm:blur-2xl opacity-25 group-hover:opacity-40 transition duration-1000`}></div>
+                  <div className="relative bg-white rounded-2xl sm:rounded-3xl p-2 shadow-2xl">
+                    <div className={`w-full h-64 sm:h-72 lg:h-80 bg-gradient-to-br ${feature.gradient} rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg`}>
+                      <div className="text-center text-white px-4">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 opacity-50">
                           {feature.icon}
                         </div>
-                        <h4 className="text-xl font-bold">{feature.title.split(' ').slice(0, 2).join(' ')}</h4>
+                        <h4 className="text-lg sm:text-xl font-bold">{feature.title.split(' ').slice(0, 2).join(' ')}</h4>
                         <p className="text-sm opacity-75">Interface</p>
                       </div>
                     </div>

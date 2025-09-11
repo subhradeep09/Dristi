@@ -118,19 +118,21 @@ const SOSHits = () => {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">SOS Alerts</h1>
-          <p className="text-gray-600 mt-1">Monitor and respond to emergency alerts from tourists.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">SOS Alerts</h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">Monitor and respond to emergency alerts from tourists.</p>
         </div>
-        <div className="flex gap-3">
-          <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm">
             <Download className="w-4 h-4" />
-            Export Report
+            <span className="hidden sm:inline">Export Report</span>
+            <span className="sm:hidden">Export</span>
           </button>
-          <button className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+          <button className="bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm">
             <AlertTriangle className="w-4 h-4" />
-            Enable Alerts
+            <span className="hidden sm:inline">Enable Alerts</span>
+            <span className="sm:hidden">Alerts</span>
           </button>
         </div>
       </div>
@@ -157,11 +159,11 @@ const SOSHits = () => {
           </div>
 
           {/* Tabs and Filters */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex border-b border-gray-200">
+          <div className="flex flex-col gap-4">
+            <div className="flex overflow-x-auto border-b border-gray-200">
               <button
                 onClick={() => setActiveTab('today')}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'today'
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'today'
                   ? 'border-red-500 text-red-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
@@ -170,7 +172,7 @@ const SOSHits = () => {
               </button>
               <button
                 onClick={() => setActiveTab('week')}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'week'
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'week'
                   ? 'border-red-500 text-red-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
@@ -179,7 +181,7 @@ const SOSHits = () => {
               </button>
               <button
                 onClick={() => setActiveTab('month')}
-                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'month'
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === 'month'
                   ? 'border-red-500 text-red-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
@@ -188,15 +190,15 @@ const SOSHits = () => {
               </button>
             </div>
 
-            <div className="flex gap-4">
-              <div className="relative">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1 sm:flex-none">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
                   placeholder="Search alerts..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 />
               </div>
               <select
@@ -214,105 +216,159 @@ const SOSHits = () => {
         </div>
 
         {/* Alerts List */}
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Tourist
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Location
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Alert Time
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Severity
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredAlerts.map((alert) => (
-                <tr key={alert.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                        {alert.avatar}
+        <div className="overflow-hidden">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Tourist
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Location
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Alert Time
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Severity
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredAlerts.map((alert) => (
+                  <tr key={alert.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                          {alert.avatar}
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{alert.name}</div>
+                          <div className="text-sm text-gray-500">{alert.touristId}</div>
+                        </div>
                       </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{alert.name}</div>
-                        <div className="text-sm text-gray-500">{alert.touristId}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-start">
+                        <MapPin className="w-4 h-4 text-gray-400 mt-0.5 mr-2" />
+                        <div>
+                          <div className="text-sm text-gray-900">{alert.location}</div>
+                          <div className="text-xs text-gray-500">{alert.coordinates}</div>
+                        </div>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {alert.alertTime}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={getSeverityBadge(alert.severity)}>
+                        {alert.severity.toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={getStatusBadge(alert.status)}>
+                        {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex gap-2">
+                        <button className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded transition-colors">
+                          View
+                        </button>
+                        {alert.status === 'pending' && (
+                          <button className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-3 py-1 rounded transition-colors">
+                            Respond
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-4 p-4">
+            {filteredAlerts.map((alert) => (
+              <div key={alert.id} className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                      {alert.avatar}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-start">
-                      <MapPin className="w-4 h-4 text-gray-400 mt-0.5 mr-2" />
-                      <div>
-                        <div className="text-sm text-gray-900">{alert.location}</div>
-                        <div className="text-xs text-gray-500">{alert.coordinates}</div>
-                      </div>
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{alert.name}</div>
+                      <div className="text-xs text-gray-500">{alert.touristId}</div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {alert.alertTime}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  </div>
+                  <div className="flex flex-col items-end space-y-1">
                     <span className={getSeverityBadge(alert.severity)}>
                       {alert.severity.toUpperCase()}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
                     <span className={getStatusBadge(alert.status)}>
                       {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
                     </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex items-start">
+                    <MapPin className="w-4 h-4 text-gray-400 mt-0.5 mr-2 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-gray-900">{alert.location}</div>
+                      <div className="text-xs text-gray-500 truncate">{alert.coordinates}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-gray-500">{alert.alertTime}</div>
                     <div className="flex gap-2">
-                      <button className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded transition-colors">
+                      <button className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded transition-colors text-sm">
                         View
                       </button>
                       {alert.status === 'pending' && (
-                        <button className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-3 py-1 rounded transition-colors">
+                        <button className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-3 py-1 rounded transition-colors text-sm">
                           Respond
                         </button>
                       )}
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Pagination */}
-        <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700">
+        <div className="px-4 sm:px-6 py-3 bg-gray-50 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="text-sm text-gray-700 text-center sm:text-left">
               Showing <span className="font-medium">1</span> to <span className="font-medium">{filteredAlerts.length}</span> of{' '}
               <span className="font-medium">{sosAlerts.length}</span> results
             </div>
-            <div className="flex gap-2">
-              <button className="px-3 py-1 text-sm border border-gray-200 rounded hover:bg-gray-50">
+            <div className="flex justify-center sm:justify-end gap-1 overflow-x-auto">
+              <button className="px-3 py-1 text-sm border border-gray-200 rounded hover:bg-gray-50 whitespace-nowrap">
                 Previous
               </button>
-              <button className="px-3 py-1 text-sm bg-red-600 text-white rounded">
+              <button className="px-3 py-1 text-sm bg-red-600 text-white rounded whitespace-nowrap">
                 1
               </button>
-              <button className="px-3 py-1 text-sm border border-gray-200 rounded hover:bg-gray-50">
+              <button className="px-3 py-1 text-sm border border-gray-200 rounded hover:bg-gray-50 whitespace-nowrap">
                 2
               </button>
-              <button className="px-3 py-1 text-sm border border-gray-200 rounded hover:bg-gray-50">
+              <button className="px-3 py-1 text-sm border border-gray-200 rounded hover:bg-gray-50 whitespace-nowrap">
                 3
               </button>
-              <button className="px-3 py-1 text-sm border border-gray-200 rounded hover:bg-gray-50">
+              <button className="px-3 py-1 text-sm border border-gray-200 rounded hover:bg-gray-50 whitespace-nowrap">
                 Next
               </button>
             </div>
