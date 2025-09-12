@@ -1,13 +1,17 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { User, Lock, LogIn } from "lucide-react";
+import { User, Lock, LogIn, MapPin, Loader2 } from "lucide-react";
+import { useLocation } from "../../contexts/useLocation";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
+  const { requestLocationPermission, isRequestingLocation } = useLocation();
   const [credentials, setCredentials] = useState({
     username: '',
     password: ''
   });
+  const [showLocationDialog, setShowLocationDialog] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -17,14 +21,39 @@ const AdminLogin = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Hardcoded credentials for demo purposes
     if (credentials.username === 'admin' && credentials.password === 'admin123') {
-      navigate('/dashboard');
+      setIsLoggingIn(true);
+      // Show location permission dialog
+      setShowLocationDialog(true);
     } else {
       alert('Invalid username or password');
+    }
+  };
+
+  const handleLocationPermission = async (granted) => {
+    if (granted) {
+      try {
+        await requestLocationPermission();
+        setShowLocationDialog(false);
+        setIsLoggingIn(false);
+        navigate('/dashboard');
+      } catch (error) {
+        console.error('Location permission error:', error);
+        // Still navigate to dashboard even if location fails
+        setShowLocationDialog(false);
+        setIsLoggingIn(false);
+        navigate('/dashboard');
+        alert('Location access denied. You can still access the dashboard, but maps will use default locations.');
+      }
+    } else {
+      // User declined location permission
+      setShowLocationDialog(false);
+      setIsLoggingIn(false);
+      navigate('/dashboard');
     }
   };
 
@@ -100,12 +129,64 @@ const AdminLogin = () => {
           {/* Sign In Button */}
           <button
             type="submit"
-            className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg shadow-md transition duration-200"
+            disabled={isLoggingIn}
+            className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-2 rounded-lg shadow-md transition duration-200"
           >
-            <LogIn size={18} className="mr-2" />
-            Sign In
+            {isLoggingIn ? (
+              <>
+                <Loader2 size={18} className="mr-2 animate-spin" />
+                Signing In...
+              </>
+            ) : (
+              <>
+                <LogIn size={18} className="mr-2" />
+                Sign In
+              </>
+            )}
           </button>
         </form>
+
+        {/* Location Permission Dialog */}
+        {showLocationDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-6 max-w-md mx-4 shadow-2xl">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MapPin className="w-8 h-8 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  Location Permission Required
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  To provide accurate map views and location-based features, we need access to your location. 
+                  This will help zoom all maps to your current area.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleLocationPermission(false)}
+                    className="flex-1 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition duration-200"
+                  >
+                    Skip
+                  </button>
+                  <button
+                    onClick={() => handleLocationPermission(true)}
+                    disabled={isRequestingLocation}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-400 transition duration-200 flex items-center justify-center gap-2"
+                  >
+                    {isRequestingLocation ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Getting Location...
+                      </>
+                    ) : (
+                      'Allow Location'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Support */}
         <p className="mt-6 text-center text-sm text-gray-600">

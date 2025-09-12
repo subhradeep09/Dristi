@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Download, Users, UserCheck, Users2, Search, Filter, Eye, MapPin, Phone, ZoomIn, ZoomOut, X } from 'lucide-react';
 import StatCard from './StatCard';
+import LocationStatus from './LocationStatus';
+import { useLocation } from '../../contexts/useLocation';
 
 const TouristActivity = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -9,6 +11,7 @@ const TouristActivity = () => {
   const [showDetails, setShowDetails] = useState(false);
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
+  const { adminLocation } = useLocation();
 
   const stats = [
     {
@@ -178,8 +181,21 @@ const TouristActivity = () => {
 
     const initializeMap = () => {
       if (mapRef.current && !mapInstanceRef.current) {
+        // Get initial map center and zoom based on admin location
+        let initialCenter, initialZoom;
+        
+        if (adminLocation) {
+          // Use admin location with appropriate zoom level
+          initialCenter = [adminLocation.lat, adminLocation.lng];
+          initialZoom = 10; // City/region level zoom
+        } else {
+          // Default to Northeast India region
+          initialCenter = [26.2006, 92.9376]; // Guwahati, Assam
+          initialZoom = 7;
+        }
+        
         // Initialize map
-        const map = window.L.map(mapRef.current).setView([20, 0], 2);
+        const map = window.L.map(mapRef.current).setView(initialCenter, initialZoom);
 
         // Add OpenStreetMap tiles
         window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -291,7 +307,7 @@ const TouristActivity = () => {
         mapInstanceRef.current = null;
       }
     };
-  }, [filteredTourists, tourists, handleTouristClick]);
+  }, [filteredTourists, tourists, handleTouristClick, adminLocation]);
 
   return (
     <div className="space-y-6">
@@ -307,6 +323,9 @@ const TouristActivity = () => {
           <span className="sm:hidden">Export</span>
         </button>
       </div>
+
+      {/* Location Status */}
+      <LocationStatus />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

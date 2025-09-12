@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit2, Trash2, MapPin, Shield, AlertTriangle, Save, X } from 'lucide-react';
 import { MapContainer, TileLayer, Polygon, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import LocationStatus from './LocationStatus';
+import { useLocation } from '../../contexts/useLocation';
 
 // Fix for default markers in Leaflet with React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -32,6 +34,18 @@ const GeoFencing = () => {
   const [showEditConfirm, setShowEditConfirm] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedZoneId, setSelectedZoneId] = useState(null);
+  const [mapCenter, setMapCenter] = useState([26.2006, 92.9376]); // Default to Guwahati
+  const [mapZoom, setMapZoom] = useState(7);
+  const { adminLocation } = useLocation();
+
+  // Update map center when admin location is available
+  useEffect(() => {
+    if (adminLocation) {
+      setMapCenter([adminLocation.lat, adminLocation.lng]);
+      setMapZoom(10); // Zoom in when we have admin location
+    }
+  }, [adminLocation]);
+
   const [editZoneData, setEditZoneData] = useState({
     name: '',
     type: 'Restricted',
@@ -378,6 +392,9 @@ const GeoFencing = () => {
         </div>
       </div>
 
+      {/* Location Status */}
+      <LocationStatus />
+
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Map Area */}
@@ -398,8 +415,8 @@ const GeoFencing = () => {
           <div className="p-6">
             <div className="h-96 rounded-lg overflow-hidden relative z-0">
               <MapContainer 
-                center={[28.2, 84.5]} 
-                zoom={6} 
+                center={mapCenter} 
+                zoom={mapZoom} 
                 style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
                 className="rounded-lg"
               >

@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Download, RefreshCw, Calendar, Search } from 'lucide-react';
 import { MapContainer, TileLayer, Circle, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import LocationStatus from './LocationStatus';
+import { useLocation } from '../../contexts/useLocation';
 
 const Heatmap = () => {
   const [dateRange, setDateRange] = useState('');
@@ -9,6 +11,16 @@ const Heatmap = () => {
   const [region, setRegion] = useState('all');
   const [activityType, setActivityType] = useState('all');
   const [currentZoom, setCurrentZoom] = useState(7);
+  const [mapCenter, setMapCenter] = useState([26.2006, 92.9376]); // Default to Guwahati
+  const { adminLocation } = useLocation();
+
+  // Update map center when admin location is available
+  useEffect(() => {
+    if (adminLocation) {
+      setMapCenter([adminLocation.lat, adminLocation.lng]);
+      setCurrentZoom(10); // Zoom in when we have admin location
+    }
+  }, [adminLocation]);
 
   // Component to handle map zoom events
   const ZoomHandler = () => {
@@ -118,6 +130,9 @@ const Heatmap = () => {
         </div>
       </div>
 
+      {/* Location Status */}
+      <LocationStatus />
+
       {/* Filters */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -191,8 +206,8 @@ const Heatmap = () => {
           <div className="p-4 sm:p-6">
             <div className="h-64 sm:h-80 lg:h-96 rounded-lg overflow-hidden">
               <MapContainer 
-                center={[28.2, 84.5]} 
-                zoom={7} 
+                center={mapCenter} 
+                zoom={currentZoom} 
                 style={{ height: '100%', width: '100%' }}
                 className="rounded-lg"
               >
