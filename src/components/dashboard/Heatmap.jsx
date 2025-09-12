@@ -1,31 +1,43 @@
 import React, { useState } from 'react';
 import { Download, RefreshCw, Calendar, Search } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Circle, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-
-// Fix for default markers in Leaflet with React
-import L from 'leaflet';
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
 
 const Heatmap = () => {
   const [dateRange, setDateRange] = useState('');
   const [touristId, setTouristId] = useState('');
   const [region, setRegion] = useState('all');
   const [activityType, setActivityType] = useState('all');
+  const [currentZoom, setCurrentZoom] = useState(7);
+
+  // Component to handle map zoom events
+  const ZoomHandler = () => {
+    const map = useMapEvents({
+      zoomend: () => {
+        setCurrentZoom(map.getZoom());
+      },
+    });
+    return null;
+  };
 
   // Sample tourist location data with heatmap intensity
   const touristData = [
-    { position: [28.7041, 77.1025], label: 'Wildlife Sanctuary', count: 45, region: 'forest' },
-    { position: [27.9881, 86.9250], label: 'Mountain Base Camp', count: 67, region: 'mountain' },
-    { position: [28.3949, 84.1240], label: 'Heritage Temple Area', count: 23, region: 'urban' },
-    { position: [28.2380, 83.9956], label: 'Trekking Route B4', count: 34, region: 'mountain' },
-    { position: [28.6139, 77.2090], label: 'City Center', count: 89, region: 'urban' },
-    { position: [27.7172, 85.3240], label: 'Valley View Point', count: 56, region: 'mountain' },
+    { position: [28.7041, 77.1025], label: 'Wildlife Sanctuary', count: 85, region: 'forest' },
+    { position: [27.9881, 86.9250], label: 'Mountain Base Camp', count: 120, region: 'mountain' },
+    { position: [28.3949, 84.1240], label: 'Heritage Temple Area', count: 45, region: 'urban' },
+    { position: [28.2380, 83.9956], label: 'Trekking Route B4', count: 67, region: 'mountain' },
+    { position: [28.6139, 77.2090], label: 'City Center', count: 150, region: 'urban' },
+    { position: [27.7172, 85.3240], label: 'Valley View Point', count: 95, region: 'mountain' },
+    { position: [28.5, 84.8], label: 'Lake District', count: 78, region: 'forest' },
+    { position: [27.8, 85.1], label: 'Adventure Zone', count: 110, region: 'mountain' },
+    { position: [28.1, 83.7], label: 'Cultural Site', count: 56, region: 'urban' },
+    { position: [28.4, 85.2], label: 'National Park', count: 89, region: 'forest' },
+    { position: [27.6, 84.9], label: 'Scenic Overlook', count: 42, region: 'mountain' },
+    { position: [28.8, 77.3], label: 'Historic Village', count: 35, region: 'urban' },
+    { position: [28.65, 77.15], label: 'Museum District', count: 72, region: 'urban' },
+    { position: [27.85, 85.05], label: 'Waterfall Trail', count: 63, region: 'mountain' },
+    { position: [28.55, 84.75], label: 'Forest Lodge', count: 48, region: 'forest' },
+    { position: [28.25, 84.05], label: 'Ancient Ruins', count: 91, region: 'urban' },
   ];
 
   // Filter data based on selected region
@@ -33,16 +45,55 @@ const Heatmap = () => {
     ? touristData 
     : touristData.filter(item => item.region === region);
 
-  // Generate heat circles based on tourist count
+  // Generate heat circles based on tourist count with proper heatmap colors
   const getHeatColor = (count) => {
-    if (count > 60) return '#ff0000'; // Red for high density
-    if (count > 40) return '#ff7f00'; // Orange for medium-high
-    if (count > 20) return '#ffff00'; // Yellow for medium
-    return '#00ff00'; // Green for low density
+    if (count >= 120) return '#8B0000'; // Dark red for very high density
+    if (count >= 100) return '#DC143C'; // Crimson for high density
+    if (count >= 80) return '#FF4500';  // Orange red for medium-high
+    if (count >= 60) return '#FF6347';  // Tomato for medium
+    if (count >= 40) return '#FFA500';  // Orange for medium-low
+    if (count >= 20) return '#FFD700';  // Gold for low
+    return '#ADFF2F'; // Green yellow for very low density
   };
 
-  const getHeatRadius = (count) => {
-    return Math.max(count * 100, 1000); // Base radius with scaling
+  const getHeatIntensity = (count, zoom = currentZoom) => {
+    // Base intensity based on count
+    let baseIntensity;
+    if (count >= 120) baseIntensity = 0.8;
+    else if (count >= 100) baseIntensity = 0.7;
+    else if (count >= 80) baseIntensity = 0.6;
+    else if (count >= 60) baseIntensity = 0.5;
+    else if (count >= 40) baseIntensity = 0.4;
+    else if (count >= 20) baseIntensity = 0.3;
+    else baseIntensity = 0.2;
+    
+    // Adjust intensity based on zoom - higher zoom = slightly higher intensity for better visibility
+    const zoomAdjustment = zoom > 10 ? 1.2 : zoom < 5 ? 0.8 : 1.0;
+    
+    return Math.min(0.85, baseIntensity * zoomAdjustment);
+  };
+
+  const getHeatRadius = (count, zoom = currentZoom) => {
+    // Zoom-aware radius calculation for better heatmap visualization
+    // The formula ensures circles are appropriately sized for each zoom level
+    
+    // Base size calculation based on tourist count
+    const countMultiplier = Math.sqrt(count) * 200;
+    
+    // Zoom-based scaling - circles get smaller as you zoom in for better detail
+    // At zoom 7 (default), circles maintain base size
+    // At lower zooms (3-6), circles get progressively larger
+    // At higher zooms (8-15), circles get progressively smaller
+    const zoomScale = Math.pow(2, 7 - zoom) * 1200;
+    
+    // Combine both factors with minimum size constraints
+    const calculatedRadius = countMultiplier + zoomScale;
+    
+    // Ensure minimum and maximum bounds for visibility
+    const minRadius = zoom > 10 ? 200 : 500;
+    const maxRadius = zoom < 5 ? 15000 : 8000;
+    
+    return Math.max(minRadius, Math.min(maxRadius, calculatedRadius));
   };
 
   return (
@@ -149,32 +200,22 @@ const Heatmap = () => {
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 />
+                <ZoomHandler />
                 
-                {/* Tourist markers with heatmap-style circles */}
+                {/* Heatmap circles without markers */}
                 {filteredData.map((tourist, index) => (
-                  <React.Fragment key={index}>
-                    {/* Heat circle */}
-                    <Circle
-                      center={tourist.position}
-                      radius={getHeatRadius(tourist.count)}
-                      pathOptions={{
-                        color: getHeatColor(tourist.count),
-                        fillColor: getHeatColor(tourist.count),
-                        fillOpacity: 0.3,
-                        opacity: 0.6
-                      }}
-                    />
-                    {/* Marker */}
-                    <Marker position={tourist.position}>
-                      <Popup>
-                        <div className="text-center">
-                          <h4 className="font-semibold">{tourist.label}</h4>
-                          <p className="text-sm text-gray-600">Tourists: {tourist.count}</p>
-                          <p className="text-xs text-gray-500">Region: {tourist.region}</p>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  </React.Fragment>
+                  <Circle
+                    key={`${index}-${currentZoom}`} // Force re-render on zoom change
+                    center={tourist.position}
+                    radius={getHeatRadius(tourist.count)}
+                    pathOptions={{
+                      color: getHeatColor(tourist.count),
+                      fillColor: getHeatColor(tourist.count),
+                      fillOpacity: getHeatIntensity(tourist.count),
+                      opacity: currentZoom > 10 ? 0.9 : 0.7,
+                      weight: Math.max(1, Math.min(3, 4 - currentZoom * 0.2)) // Dynamic border thickness
+                    }}
+                  />
                 ))}
               </MapContainer>
             </div>
@@ -187,7 +228,7 @@ const Heatmap = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Active Tourists</h3>
             <div className="text-center">
-              <div className="text-2xl sm:text-3xl font-bold text-blue-600 mb-1">2,847</div>
+              <div className="text-2xl sm:text-3xl font-bold text-blue-600 mb-1">3,247</div>
               <p className="text-xs sm:text-sm text-gray-500">Currently tracked</p>
             </div>
           </div>
@@ -196,36 +237,50 @@ const Heatmap = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Busiest Region</h3>
             <div>
-              <div className="text-lg sm:text-xl font-bold text-green-600 mb-1">Mountain Zone</div>
-              <p className="text-xs sm:text-sm text-gray-500 mb-2">847 tourists present</p>
+              <div className="text-lg sm:text-xl font-bold text-red-600 mb-1">City Center</div>
+              <p className="text-xs sm:text-sm text-gray-500 mb-2">150 tourists present</p>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-green-500 h-2 rounded-full" style={{ width: '65%' }}></div>
+                <div className="bg-red-500 h-2 rounded-full" style={{ width: '85%' }}></div>
               </div>
             </div>
           </div>
 
           {/* Tourist Density Legend */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Tourist Density</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Density Legend</h3>
             <div className="space-y-2 sm:space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-green-500 rounded"></div>
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: '#8B0000' }}></div>
+                  <span className="text-xs sm:text-sm text-gray-700">Very High</span>
+                </div>
+                <span className="text-xs sm:text-sm text-gray-500">120+ tourists</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: '#DC143C' }}></div>
                   <span className="text-xs sm:text-sm text-gray-700">High</span>
                 </div>
-                <span className="text-xs sm:text-sm text-gray-500">50+ tourists</span>
+                <span className="text-xs sm:text-sm text-gray-500">100-119 tourists</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: '#FF6347' }}></div>
                   <span className="text-xs sm:text-sm text-gray-700">Medium</span>
                 </div>
-                <span className="text-xs sm:text-sm text-gray-500">20-49 tourists</span>
+                <span className="text-xs sm:text-sm text-gray-500">60-99 tourists</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-red-500 rounded"></div>
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: '#FFA500' }}></div>
                   <span className="text-xs sm:text-sm text-gray-700">Low</span>
+                </div>
+                <span className="text-xs sm:text-sm text-gray-500">20-59 tourists</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded" style={{ backgroundColor: '#ADFF2F' }}></div>
+                  <span className="text-xs sm:text-sm text-gray-700">Very Low</span>
                 </div>
                 <span className="text-xs sm:text-sm text-gray-500">1-19 tourists</span>
               </div>

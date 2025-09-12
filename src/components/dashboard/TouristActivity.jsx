@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
-import { Download, Users, UserCheck, Users2, Search, Filter, Eye, MapPin, Phone } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { Download, Users, UserCheck, Users2, Search, Filter, Eye, MapPin, Phone, ZoomIn, ZoomOut, X } from 'lucide-react';
 import StatCard from './StatCard';
 
 const TouristActivity = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [selectedTourist, setSelectedTourist] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
 
   const stats = [
     {
@@ -30,15 +34,20 @@ const TouristActivity = () => {
     }
   ];
 
-  const tourists = [
+  const tourists = useMemo(() => [
     {
       id: 'TG001234',
       name: 'John Smith',
       avatar: 'JS',
       loginTime: '09:24 AM',
       status: 'online',
-      location: 'Mount Everest Base',
-      digitalId: 'TG001234'
+      location: 'Tawang, Arunachal Pradesh',
+      digitalId: 'TG001234',
+      coordinates: { lat: 27.5860, lng: 91.8590 }, // Tawang, Arunachal Pradesh
+      phone: '+91-234-567-8901',
+      email: 'john.smith@email.com',
+      checkInTime: '09:24 AM',
+      lastActivity: '2 minutes ago'
     },
     {
       id: 'TG001235',
@@ -46,8 +55,13 @@ const TouristActivity = () => {
       avatar: 'SJ',
       loginTime: '08:45 AM',
       status: 'online',
-      location: 'Tiger Reserve Zone',
-      digitalId: 'TG001235'
+      location: 'Imphal, Manipur',
+      digitalId: 'TG001235',
+      coordinates: { lat: 24.8170, lng: 93.9368 }, // Imphal, Manipur
+      phone: '+91-345-678-9012',
+      email: 'sarah.johnson@email.com',
+      checkInTime: '08:45 AM',
+      lastActivity: '5 minutes ago'
     },
     {
       id: 'TG001236',
@@ -55,8 +69,13 @@ const TouristActivity = () => {
       avatar: 'MC',
       loginTime: '10:12 AM',
       status: 'offline',
-      location: 'Border Area 7',
-      digitalId: 'TG001236'
+      location: 'Shillong, Meghalaya',
+      digitalId: 'TG001236',
+      coordinates: { lat: 25.5788, lng: 91.8933 }, // Shillong, Meghalaya
+      phone: '+91-456-789-0123',
+      email: 'mike.chen@email.com',
+      checkInTime: '10:12 AM',
+      lastActivity: '15 minutes ago'
     },
     {
       id: 'TG001237',
@@ -64,8 +83,13 @@ const TouristActivity = () => {
       avatar: 'ED',
       loginTime: '07:30 AM',
       status: 'online',
-      location: 'Wildlife Sanctuary',
-      digitalId: 'TG001237'
+      location: 'Kohima, Nagaland',
+      digitalId: 'TG001237',
+      coordinates: { lat: 25.6751, lng: 94.1086 }, // Kohima, Nagaland
+      phone: '+91-567-890-1234',
+      email: 'emma.davis@email.com',
+      checkInTime: '07:30 AM',
+      lastActivity: '1 minute ago'
     },
     {
       id: 'TG001238',
@@ -73,10 +97,15 @@ const TouristActivity = () => {
       avatar: 'AK',
       loginTime: '11:05 AM',
       status: 'online',
-      location: 'Valley Trek Route',
-      digitalId: 'TG001238'
+      location: 'Gangtok, Sikkim',
+      digitalId: 'TG001238',
+      coordinates: { lat: 27.3389, lng: 88.6065 }, // Gangtok, Sikkim
+      phone: '+91-678-901-2345',
+      email: 'alex.kumar@email.com',
+      checkInTime: '11:05 AM',
+      lastActivity: '3 minutes ago'
     }
-  ];
+  ], []);
 
   const getStatusBadge = (status) => {
     return status === 'online' 
@@ -90,6 +119,179 @@ const TouristActivity = () => {
     const matchesStatus = filterStatus === 'all' || tourist.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
+
+  const handleTouristClick = useCallback((tourist) => {
+    setSelectedTourist(tourist);
+  }, []);
+
+  const handleShowDetails = () => {
+    setShowDetails(true);
+  };
+
+  const handleCloseDetails = () => {
+    setShowDetails(false);
+    setSelectedTourist(null);
+  };
+
+  const handleViewTourist = useCallback((tourist) => {
+    setSelectedTourist(tourist);
+    setShowDetails(true); // Directly show details
+  }, []);
+
+  const handleLocateTourist = useCallback((tourist) => {
+    if (mapInstanceRef.current) {
+      // Focus on the specific tourist's location
+      mapInstanceRef.current.setView([tourist.coordinates.lat, tourist.coordinates.lng], 12);
+      
+      // Optional: Show a popup for the tourist
+      const markers = mapInstanceRef.current._layers;
+      Object.values(markers).forEach(layer => {
+        if (layer._latlng && 
+            Math.abs(layer._latlng.lat - tourist.coordinates.lat) < 0.001 && 
+            Math.abs(layer._latlng.lng - tourist.coordinates.lng) < 0.001) {
+          layer.openPopup();
+        }
+      });
+    }
+  }, []);
+
+  // Initialize Leaflet map
+  useEffect(() => {
+    // Load Leaflet CSS and JS dynamically
+    const loadLeaflet = async () => {
+      if (!window.L) {
+        // Load Leaflet CSS
+        const cssLink = document.createElement('link');
+        cssLink.rel = 'stylesheet';
+        cssLink.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(cssLink);
+
+        // Load Leaflet JS
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        script.onload = () => initializeMap();
+        document.head.appendChild(script);
+      } else {
+        initializeMap();
+      }
+    };
+
+    const initializeMap = () => {
+      if (mapRef.current && !mapInstanceRef.current) {
+        // Initialize map
+        const map = window.L.map(mapRef.current).setView([20, 0], 2);
+
+        // Add OpenStreetMap tiles
+        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        mapInstanceRef.current = map;
+
+        // Add tourist markers
+        addTouristMarkers(map);
+      }
+    };
+
+    const addTouristMarkers = (map) => {
+      filteredTourists
+        .filter(tourist => tourist.status === 'online')
+        .forEach(tourist => {
+          // Create custom icon
+          const customIcon = window.L.divIcon({
+            className: 'custom-marker',
+            html: `
+              <div style="
+                width: 24px;
+                height: 24px;
+                background-color: #dc2626;
+                border: 2px solid white;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                position: relative;
+              ">
+                <div style="
+                  width: 8px;
+                  height: 8px;
+                  background-color: white;
+                  border-radius: 50%;
+                "></div>
+              </div>
+            `,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+          });
+
+          // Add marker
+          const marker = window.L.marker([tourist.coordinates.lat, tourist.coordinates.lng], {
+            icon: customIcon
+          }).addTo(map);
+
+          // Add popup
+          marker.bindPopup(`
+            <div style="font-family: Arial, sans-serif; min-width: 200px;">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <div style="
+                  width: 32px;
+                  height: 32px;
+                  background-color: #3b82f6;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  color: white;
+                  font-weight: bold;
+                  font-size: 12px;
+                ">${tourist.avatar}</div>
+                <div>
+                  <div style="font-weight: bold; color: #1f2937;">${tourist.name}</div>
+                  <div style="font-size: 12px; color: #6b7280;">${tourist.digitalId}</div>
+                </div>
+              </div>
+              <div style="font-size: 14px; color: #4b5563; margin-bottom: 8px;">
+                <strong>Location:</strong> ${tourist.location}
+              </div>
+              <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">
+                <strong>Last Activity:</strong> ${tourist.lastActivity}
+              </div>
+              <button 
+                onclick="window.showTouristDetails('${tourist.id}')"
+                style="
+                  background-color: #3b82f6;
+                  color: white;
+                  border: none;
+                  padding: 6px 12px;
+                  border-radius: 6px;
+                  font-size: 12px;
+                  cursor: pointer;
+                  width: 100%;
+                "
+              >View Full Details</button>
+            </div>
+          `);
+        });
+    };
+
+    // Global function to show tourist details
+    window.showTouristDetails = (touristId) => {
+      const tourist = tourists.find(t => t.id === touristId);
+      if (tourist) {
+        handleTouristClick(tourist);
+      }
+    };
+
+    loadLeaflet();
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [filteredTourists, tourists, handleTouristClick]);
 
   return (
     <div className="space-y-6">
@@ -120,26 +322,143 @@ const TouristActivity = () => {
         ))}
       </div>
 
-      {/* Activity Trends Chart Placeholder */}
+      {/* Interactive Leaflet Map */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-          <h2 className="text-lg font-semibold text-gray-900">Activity Trends</h2>
-          <div className="flex gap-2 overflow-x-auto">
-            <button className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg font-medium whitespace-nowrap">7 Days</button>
-            <button className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700 rounded-lg whitespace-nowrap">30 Days</button>
-            <button className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700 rounded-lg whitespace-nowrap">3 Months</button>
+          <h2 className="text-lg font-semibold text-gray-900">Global Tourist Locations</h2>
+          <div className="text-sm text-gray-600">
+            Powered by Leaflet | © OpenStreetMap contributors
           </div>
         </div>
-        <div className="h-48 sm:h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-          <div className="text-center text-gray-500 px-4">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-gray-300 text-2xl sm:text-4xl">
-              📊
+        
+        {/* Leaflet Map Container */}
+        <div className="relative h-64 sm:h-96 rounded-lg border-2 border-gray-200 overflow-hidden">
+          <div ref={mapRef} className="w-full h-full" style={{ zIndex: 1 }}></div>
+          
+          {/* Custom CSS for Leaflet markers and z-index fixes */}
+          <style jsx>{`
+            .custom-marker {
+              background: transparent !important;
+              border: none !important;
+            }
+            .leaflet-popup-content-wrapper {
+              border-radius: 8px !important;
+              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+            }
+            .leaflet-popup-tip {
+              background: white !important;
+            }
+            .leaflet-control-container {
+              z-index: 1000 !important;
+            }
+            .leaflet-popup {
+              z-index: 1001 !important;
+            }
+            .leaflet-map-pane {
+              z-index: 1 !important;
+            }
+            .leaflet-tile-pane {
+              z-index: 1 !important;
+            }
+            .leaflet-overlay-pane {
+              z-index: 2 !important;
+            }
+            .leaflet-marker-pane {
+              z-index: 3 !important;
+            }
+          `}</style>
+        </div>
+        
+        {/* Map Info */}
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-sm text-gray-600">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-600 rounded-full border border-white shadow-sm"></div>
+              <span>Active Tourists ({filteredTourists.filter(t => t.status === 'online').length})</span>
             </div>
-            <p className="text-base sm:text-lg font-medium">Interactive chart showing tourist activity trends</p>
-            <p className="text-xs sm:text-sm">Registrations and logins over time</p>
+          </div>
+          <div className="text-xs">
+            Click on markers for detailed information
           </div>
         </div>
       </div>
+
+      {/* Tourist Info Popup */}
+      {selectedTourist && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full relative" style={{ zIndex: 10000 }}>
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Tourist Information</h3>
+                <button 
+                  onClick={handleCloseDetails}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                  {selectedTourist.avatar}
+                </div>
+                <div>
+                  <div className="font-medium text-gray-900">{selectedTourist.name}</div>
+                  <div className="text-sm text-gray-500">{selectedTourist.digitalId}</div>
+                </div>
+                <span className={getStatusBadge(selectedTourist.status)}>
+                  {selectedTourist.status}
+                </span>
+              </div>
+              
+              {!showDetails ? (
+                <button 
+                  onClick={handleShowDetails}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  View Details
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">Phone:</span>
+                      <div className="font-medium">{selectedTourist.phone}</div>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Email:</span>
+                      <div className="font-medium text-xs">{selectedTourist.email}</div>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Check-in Time:</span>
+                      <div className="font-medium">{selectedTourist.checkInTime}</div>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Last Activity:</span>
+                      <div className="font-medium">{selectedTourist.lastActivity}</div>
+                    </div>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-gray-500">Current Location:</span>
+                    <div className="font-medium">{selectedTourist.location}</div>
+                  </div>
+                  
+                  <div className="flex space-x-2 pt-3 border-t border-gray-200">
+                    <button className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors">
+                      <MapPin className="w-4 h-4" />
+                      Track Location
+                    </button>
+                    <button className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors">
+                      <Phone className="w-4 h-4" />
+                      Call Tourist
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Active Tourists Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -212,13 +531,21 @@ const TouristActivity = () => {
                   <td className="py-4 px-6 text-gray-600">{tourist.location}</td>
                   <td className="py-4 px-6">
                     <div className="flex space-x-2">
-                      <button className="p-1 text-blue-600 hover:text-blue-800">
+                      <button 
+                        onClick={() => handleViewTourist(tourist)}
+                        className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+                        title="View Details"
+                      >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button className="p-1 text-green-600 hover:text-green-800">
+                      <button 
+                        onClick={() => handleLocateTourist(tourist)}
+                        className="p-1 text-green-600 hover:text-green-800 hover:bg-green-50 rounded transition-colors"
+                        title="Show on Map"
+                      >
                         <MapPin className="w-4 h-4" />
                       </button>
-                      <button className="p-1 text-red-600 hover:text-red-800">
+                      <button className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors" title="Call Tourist">
                         <Phone className="w-4 h-4" />
                       </button>
                     </div>
@@ -260,13 +587,21 @@ const TouristActivity = () => {
               </div>
               
               <div className="flex justify-end space-x-3 pt-2 border-t border-gray-100">
-                <button className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors">
+                <button 
+                  onClick={() => handleViewTourist(tourist)}
+                  className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="View Details"
+                >
                   <Eye className="w-4 h-4" />
                 </button>
-                <button className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors">
+                <button 
+                  onClick={() => handleLocateTourist(tourist)}
+                  className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors"
+                  title="Show on Map"
+                >
                   <MapPin className="w-4 h-4" />
                 </button>
-                <button className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors">
+                <button className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors" title="Call Tourist">
                   <Phone className="w-4 h-4" />
                 </button>
               </div>
