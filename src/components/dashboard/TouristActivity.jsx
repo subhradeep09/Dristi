@@ -9,8 +9,14 @@ const TouristActivity = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedTourist, setSelectedTourist] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [wsConnected, setWsConnected] = useState(false);
+  const [liveUpdates, setLiveUpdates] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [touristLocations, setTouristLocations] = useState(new Map());
+  
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
+  const wsRef = useRef(null);
   const { adminLocation } = useLocation();
 
   const stats = [
@@ -158,8 +164,192 @@ const TouristActivity = () => {
     }
   }, []);
 
+  // WebSocket helper functions
+  const sendWebSocketMessage = useCallback((message) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      const messageWithTimestamp = {
+        ...message,
+        timestamp: new Date().toISOString(),
+        clientId: 'tourist-activity-dashboard'
+      };
+      
+      try {
+        const messageString = JSON.stringify(messageWithTimestamp);
+        wsRef.current.send(messageString);
+        console.log('📤 Sent WebSocket message:', messageWithTimestamp);
+        return true;
+      } catch (sendError) {
+        console.error('❌ Error sending WebSocket message:', sendError);
+        return false;
+      }
+    } else {
+      const readyStateNames = ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'];
+      const currentState = wsRef.current ? readyStateNames[wsRef.current.readyState] : 'NO_CONNECTION';
+      console.warn('⚠️ WebSocket is not connected. Current state:', currentState);
+      console.warn('Message not sent:', message);
+      return false;
+    }
+  }, []);
+
+  // Test WebSocket function (you can call this from browser console)
+  const testWebSocket = useCallback(() => {
+    const testMessage = {
+      type: 'test',
+      data: 'Hello from Tourist Activity Dashboard!',
+      action: 'ping'
+    };
+    
+    console.log('🧪 Testing WebSocket connection...');
+    console.log('Current WebSocket state:', wsRef.current ? wsRef.current.readyState : 'No connection');
+    
+    const sent = sendWebSocketMessage(testMessage);
+    
+    if (sent) {
+      console.log('✅ Test message sent successfully');
+    } else {
+      console.log('❌ Failed to send test message - WebSocket not connected');
+    }
+  }, [sendWebSocketMessage]);
+
+  // Test different WebSocket URLs
+  const testWebSocketURL = useCallback((url) => {
+    console.log('🧪 Testing WebSocket URL:', url);
+    
+    try {
+      const testWs = new WebSocket(url);
+      
+      const timeout = setTimeout(() => {
+        if (testWs.readyState === WebSocket.CONNECTING) {
+          console.log('⏰ Connection timeout for:', url);
+          testWs.close();
+        }
+      }, 10000); // 10 second timeout
+      
+      testWs.onopen = () => {
+        clearTimeout(timeout);
+        console.log('✅ Successfully connected to:', url);
+        testWs.close(1000, 'Test completed');
+      };
+      
+      testWs.onerror = (error) => {
+        clearTimeout(timeout);
+        console.log('❌ Failed to connect to:', url);
+        console.log('Error:', error);
+      };
+      
+      testWs.onclose = (event) => {
+        console.log('🔌 Test connection closed for:', url, 'Code:', event.code, 'Reason:', event.reason);
+      };
+      
+    } catch (error) {
+      console.error('❌ Error testing WebSocket URL:', url, error);
+    }
+  }, []);
+
+  // Expose testWebSocket to global scope for testing
+  useEffect(() => {
+    window.testTouristWebSocket = testWebSocket;
+    window.testWebSocketURL = testWebSocketURL;
+    
+    // Add some helpful debug functions
+    window.getWebSocketState = () => {
+      if (wsRef.current) {
+        const states = ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'];
+        return {
+          readyState: wsRef.current.readyState,
+          readyStateName: states[wsRef.current.readyState],
+          url: wsRef.current.url,
+          protocol: wsRef.current.protocol,
+          connected: wsConnected
+        };
+      }
+      return { state: 'NO_CONNECTION', connected: wsConnected };
+    };
+    
+    window.reconnectWebSocket = () => {
+      if (wsRef.current) {
+        console.log('🔄 Manually closing current connection...');
+        wsRef.current.close(1000, 'Manual reconnection');
+      }
+      console.log('🔄 Manually triggering reconnection...');
+      // The onclose handler will automatically reconnect
+    };
+    
+    // Add function to send test data
+    window.sendTestMessage = (type = 'test') => {
+      const testMessages = {
+        test: {
+          type: 'test',
+          data: 'Hello from Tourist Activity Dashboard!',
+          timestamp: new Date().toISOString()
+        },
+        sos: {
+          type: 'dashboard_update',
+          data: {
+            type: 'SOS',
+            aadhaar_number: 'TEST123456789',
+            latitude: 27.5860,
+            longitude: 91.8590,
+            timestamp: new Date().toISOString(),
+            location_name: 'Test Location'
+          }
+        },
+        geofence: {
+          type: 'dashboard_update',
+          data: {
+            aadhaar_number: 'TEST123456789',
+            latitude: 27.5860,
+            longitude: 91.8590,
+            geofence_breached: true,
+            timestamp: new Date().toISOString(),
+            location_name: 'Outside Geofence'
+          }
+        },
+        location: {
+          type: 'dashboard_update',
+          data: {
+            aadhaar_number: 'TEST123456789',
+            latitude: 27.5860 + (Math.random() - 0.5) * 0.01,
+            longitude: 91.8590 + (Math.random() - 0.5) * 0.01,
+            timestamp: new Date().toISOString(),
+            location_name: 'Moving Location'
+          }
+        }
+      };
+      
+      const message = testMessages[type] || testMessages.test;
+      return sendWebSocketMessage(message);
+    };
+    
+    // Show current live data
+    window.getLiveData = () => {
+      return {
+        wsConnected,
+        liveUpdates: liveUpdates.slice(0, 5),
+        alerts: alerts.slice(0, 3),
+        touristLocations: Object.fromEntries(touristLocations)
+      };
+    };
+    
+    return () => {
+      delete window.testTouristWebSocket;
+      delete window.testWebSocketURL;
+      delete window.getWebSocketState;
+      delete window.reconnectWebSocket;
+      delete window.sendTestMessage;
+      delete window.getLiveData;
+    };
+  }, [testWebSocket, testWebSocketURL, wsConnected, liveUpdates, alerts, touristLocations, sendWebSocketMessage]);
+
   // Initialize Leaflet map
   useEffect(() => {
+    // Request notification permission
+    if (Notification.permission === 'default') {
+      Notification.requestPermission().then(permission => {
+        console.log('Notification permission:', permission);
+      });
+    }
+    
     // Load Leaflet CSS and JS dynamically
     const loadLeaflet = async () => {
       if (!window.L) {
@@ -309,13 +499,199 @@ const TouristActivity = () => {
     };
   }, [filteredTourists, tourists, handleTouristClick, adminLocation]);
 
+  // WebSocket connection setup
+  useEffect(() => {
+    let reconnectTimeout = null;
+
+    const connect = () => {
+      console.log('🔄 Attempting to connect to WebSocket...');
+      
+      // Clear any existing connection
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+
+      const ws = new WebSocket("wss://drishti-y8b6.onrender.com/dashboard");
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        console.log("✅ WebSocket connected successfully");
+        setWsConnected(true);
+        
+        // Clear any pending reconnection attempts
+        if (reconnectTimeout) {
+          clearTimeout(reconnectTimeout);
+          reconnectTimeout = null;
+        }
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          console.log("📨 Received WebSocket message:", event.data);
+          const message = JSON.parse(event.data);
+
+          if (message.type === "dashboard_update" && message.data) {
+            const data = message.data;
+            console.log("📊 Dashboard update received:", data);
+            
+            // Add to live updates
+            setLiveUpdates(prev => [{
+              id: Date.now(),
+              timestamp: new Date(),
+              type: 'dashboard_update',
+              data: data
+            }, ...prev.slice(0, 49)]); // Keep last 50 updates
+            
+            // Handle SOS alerts
+            if (data.type === "SOS") {
+              console.log("🚨 SOS Alert received:", data);
+              const alert = {
+                id: Date.now(),
+                type: "SOS",
+                userId: data.aadhaar_number,
+                location: { lat: data.latitude, lng: data.longitude },
+                timestamp: new Date(data.timestamp || Date.now()),
+                message: `SOS alert from user ${data.aadhaar_number}`,
+                severity: 'high'
+              };
+              setAlerts(prev => [alert, ...prev.slice(0, 19)]); // Keep last 20 alerts
+              
+              // Show browser notification if permissions granted
+              if (Notification.permission === 'granted') {
+                new Notification('🚨 SOS Alert', {
+                  body: `Emergency alert from tourist at ${data.latitude}, ${data.longitude}`,
+                  icon: '/dristi-icon.svg'
+                });
+              }
+            } 
+            // Handle geofence breaches
+            else if (data.geofence_breached) {
+              console.log("⚠️ Geofence breach detected:", data);
+              const alert = {
+                id: Date.now(),
+                type: "GEOFENCE_BREACH",
+                userId: data.aadhaar_number,
+                location: { lat: data.latitude, lng: data.longitude },
+                timestamp: new Date(data.timestamp || Date.now()),
+                message: `Tourist ${data.aadhaar_number} breached geofence`,
+                severity: 'medium'
+              };
+              setAlerts(prev => [alert, ...prev.slice(0, 19)]);
+              
+              if (Notification.permission === 'granted') {
+                new Notification('⚠️ Geofence Breach', {
+                  body: `Tourist has moved outside designated area`,
+                  icon: '/dristi-icon.svg'
+                });
+              }
+            }
+            // Handle tourist location updates
+            else if (data.aadhaar_number && data.latitude && data.longitude) {
+              console.log("📍 Tourist location update:", data);
+              setTouristLocations(prev => {
+                const newMap = new Map(prev);
+                newMap.set(data.aadhaar_number, {
+                  lat: data.latitude,
+                  lng: data.longitude,
+                  timestamp: new Date(data.timestamp || Date.now()),
+                  location_name: data.location_name || 'Unknown Location'
+                });
+                return newMap;
+              });
+            }
+          }
+          // Handle other message types
+          else if (message.type === "tourist_update") {
+            console.log("👤 Tourist activity update:", message.data);
+            setLiveUpdates(prev => [{
+              id: Date.now(),
+              timestamp: new Date(),
+              type: 'tourist_update',
+              data: message.data
+            }, ...prev.slice(0, 49)]);
+          }
+          else if (message.type === "connection_confirmed") {
+            console.log("✅ Connection confirmed by server:", message.data);
+          }
+          else {
+            console.log("📋 Other message type:", message.type, message);
+            setLiveUpdates(prev => [{
+              id: Date.now(),
+              timestamp: new Date(),
+              type: message.type || 'unknown',
+              data: message.data || message
+            }, ...prev.slice(0, 49)]);
+          }
+        } catch (err) {
+          console.error("❌ Error parsing WebSocket message:", err);
+          console.error("Raw message:", event.data);
+        }
+      };
+
+      ws.onclose = (event) => {
+        console.log("⚠️ WebSocket disconnected:", event.code, event.reason);
+        setWsConnected(false);
+        
+        // Only attempt reconnection if it wasn't a deliberate close
+        if (event.code !== 1000) {
+          console.log("🔄 Attempting to reconnect in 5 seconds...");
+          reconnectTimeout = setTimeout(() => {
+            if (wsRef.current === ws) { // Only reconnect if this is still the current connection
+              connect();
+            }
+          }, 5000);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error("❌ WebSocket error:", error);
+        setWsConnected(false);
+      };
+    };
+
+    // Initial connection
+    connect();
+
+    // Cleanup function
+    return () => {
+      console.log('🧹 Cleaning up WebSocket connection');
+      
+      // Clear any pending reconnection
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+      
+      // Close connection
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        try {
+          wsRef.current.close(1000, 'Component unmounting');
+        } catch (closeError) {
+          console.warn('⚠️ Error closing WebSocket during cleanup:', closeError.message);
+        }
+      }
+      
+      wsRef.current = null;
+      setWsConnected(false);
+    };
+  }, []); // Empty dependency array - only run once on mount
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Tourist Activity</h1>
-          <p className="text-gray-600 mt-1 text-sm sm:text-base">Monitor tourist registrations, logins, and real-time activity.</p>
+          <div className="flex items-center gap-4 mt-1">
+            <p className="text-gray-600 text-sm sm:text-base">Monitor tourist registrations, logins, and real-time activity.</p>
+            {/* WebSocket Connection Status */}
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+              <span className={`text-xs font-medium ${wsConnected ? 'text-green-600' : 'text-red-600'}`}>
+                {wsConnected ? 'Live Data' : 'Disconnected'}
+              </span>
+            </div>
+          </div>
         </div>
         <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm">
           <Download className="w-4 h-4" />
@@ -341,6 +717,79 @@ const TouristActivity = () => {
         ))}
       </div>
 
+      {/* Live Updates Panel */}
+      {liveUpdates.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Live Updates</h2>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-sm text-green-600 font-medium">Real-time</span>
+            </div>
+          </div>
+          <div className="max-h-48 overflow-y-auto space-y-2">
+            {liveUpdates.slice(0, 10).map((update) => (
+              <div key={update.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-gray-900 capitalize">
+                      {update.type.replace('_', ' ')}
+                    </span>
+                    <span className="text-xs text-gray-500 flex-shrink-0">
+                      {update.timestamp.toLocaleTimeString()}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1 truncate">
+                    {JSON.stringify(update.data).substring(0, 100)}...
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Alerts Panel */}
+      {alerts.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm border border-red-200 p-4 sm:p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-red-900">Active Alerts</h2>
+            <span className="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+              {alerts.length} alerts
+            </span>
+          </div>
+          <div className="space-y-3">
+            {alerts.slice(0, 5).map((alert) => (
+              <div key={alert.id} className={`p-3 rounded-lg border-l-4 ${
+                alert.severity === 'high' 
+                  ? 'bg-red-50 border-red-500' 
+                  : alert.severity === 'medium'
+                  ? 'bg-yellow-50 border-yellow-500'
+                  : 'bg-blue-50 border-blue-500'
+              }`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-gray-900">
+                        {alert.type === 'SOS' ? '🚨 SOS Alert' : '⚠️ Geofence Breach'}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {alert.timestamp.toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-700 mt-1">{alert.message}</p>
+                    <div className="text-xs text-gray-600 mt-1">
+                      Location: {alert.location.lat.toFixed(4)}, {alert.location.lng.toFixed(4)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Interactive Leaflet Map */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
@@ -353,39 +802,6 @@ const TouristActivity = () => {
         {/* Leaflet Map Container */}
         <div className="relative h-64 sm:h-96 rounded-lg border-2 border-gray-200 overflow-hidden">
           <div ref={mapRef} className="w-full h-full" style={{ zIndex: 1 }}></div>
-          
-          {/* Custom CSS for Leaflet markers and z-index fixes */}
-          <style jsx>{`
-            .custom-marker {
-              background: transparent !important;
-              border: none !important;
-            }
-            .leaflet-popup-content-wrapper {
-              border-radius: 8px !important;
-              box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-            }
-            .leaflet-popup-tip {
-              background: white !important;
-            }
-            .leaflet-control-container {
-              z-index: 1000 !important;
-            }
-            .leaflet-popup {
-              z-index: 1001 !important;
-            }
-            .leaflet-map-pane {
-              z-index: 1 !important;
-            }
-            .leaflet-tile-pane {
-              z-index: 1 !important;
-            }
-            .leaflet-overlay-pane {
-              z-index: 2 !important;
-            }
-            .leaflet-marker-pane {
-              z-index: 3 !important;
-            }
-          `}</style>
         </div>
         
         {/* Map Info */}
