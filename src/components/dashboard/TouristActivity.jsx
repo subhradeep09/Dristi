@@ -2,41 +2,52 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { Download, Users, UserCheck, Users2, Search, Filter, Eye, MapPin, Phone, ZoomIn, ZoomOut, X } from 'lucide-react';
 import StatCard from './StatCard';
 import LocationStatus from './LocationStatus';
+import WebSocketStatus from './WebSocketStatus';
 import { useLocation } from '../../contexts/useLocation';
+import { useWebSocket } from '../../contexts/useWebSocket';
+import { useData } from '../../contexts/useData';
 
 const TouristActivity = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedTourist, setSelectedTourist] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [wsConnected, setWsConnected] = useState(false);
-  const [liveUpdates, setLiveUpdates] = useState([]);
-  const [alerts, setAlerts] = useState([]);
-  const [touristLocations, setTouristLocations] = useState(new Map());
   
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
-  const wsRef = useRef(null);
   const { adminLocation } = useLocation();
+  
+  // Use global WebSocket context
+  const { 
+    liveUpdates, 
+    alerts
+  } = useWebSocket();
+
+  // Use global data context for API data
+  const { 
+    dashboardStats, 
+    tourists: touristsData, 
+    refreshData 
+  } = useData();
 
   const stats = [
     {
       title: 'Total Registered',
-      value: '12,847',
+      value: dashboardStats.loading ? '...' : dashboardStats.totalRegistered?.toLocaleString() || '12,847',
       icon: Users,
       color: 'blue',
-      subtitle: '+234 this week'
+      subtitle: dashboardStats.loading ? 'Loading...' : '+234 this week'
     },
     {
       title: 'Logged In Today',
-      value: '2,341',
+      value: dashboardStats.loading ? '...' : dashboardStats.activeToday?.toLocaleString() || '2,341',
       icon: UserCheck,
       color: 'green',
-      subtitle: '+15% from yesterday'
+      subtitle: dashboardStats.loading ? 'Loading...' : '+15% from yesterday'
     },
     {
       title: 'Currently Online',
-      value: '847',
+      value: dashboardStats.loading ? '...' : dashboardStats.currentlyOnline?.toLocaleString() || '847',
       icon: Users2,
       color: 'purple',
       subtitle: 'Real-time count'
@@ -122,12 +133,18 @@ const TouristActivity = () => {
       : 'bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium';
   };
 
-  const filteredTourists = tourists.filter(tourist => {
-    const matchesSearch = tourist.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         tourist.digitalId.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || tourist.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredTourists = useMemo(() => {
+    // Use API data if available, otherwise use static data
+    const dataSource = touristsData.loading ? tourists : [...tourists, ...(touristsData.active || [])];
+    
+    return dataSource.filter(tourist => {
+      const matchesSearch = tourist.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           tourist.digitalId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           tourist.aadhaar_number?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = filterStatus === 'all' || tourist.status === filterStatus;
+      return matchesSearch && matchesStatus;
+    });
+  }, [searchTerm, filterStatus, tourists, touristsData]);
 
   const handleTouristClick = useCallback((tourist) => {
     setSelectedTourist(tourist);
@@ -164,193 +181,8 @@ const TouristActivity = () => {
     }
   }, []);
 
-  // WebSocket helper functions
-  const sendWebSocketMessage = useCallback((message) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      const messageWithTimestamp = {
-        ...message,
-        timestamp: new Date().toISOString(),
-        clientId: 'tourist-activity-dashboard'
-      };
-      
-      try {
-        const messageString = JSON.stringify(messageWithTimestamp);
-        wsRef.current.send(messageString);
-        console.log('📤 Sent WebSocket message:', messageWithTimestamp);
-        return true;
-      } catch (sendError) {
-        console.error('❌ Error sending WebSocket message:', sendError);
-        return false;
-      }
-    } else {
-      const readyStateNames = ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'];
-      const currentState = wsRef.current ? readyStateNames[wsRef.current.readyState] : 'NO_CONNECTION';
-      console.warn('⚠️ WebSocket is not connected. Current state:', currentState);
-      console.warn('Message not sent:', message);
-      return false;
-    }
-  }, []);
-
-  // Test WebSocket function (you can call this from browser console)
-  const testWebSocket = useCallback(() => {
-    const testMessage = {
-      type: 'test',
-      data: 'Hello from Tourist Activity Dashboard!',
-      action: 'ping'
-    };
-    
-    console.log('🧪 Testing WebSocket connection...');
-    console.log('Current WebSocket state:', wsRef.current ? wsRef.current.readyState : 'No connection');
-    
-    const sent = sendWebSocketMessage(testMessage);
-    
-    if (sent) {
-      console.log('✅ Test message sent successfully');
-    } else {
-      console.log('❌ Failed to send test message - WebSocket not connected');
-    }
-  }, [sendWebSocketMessage]);
-
-  // Test different WebSocket URLs
-  const testWebSocketURL = useCallback((url) => {
-    console.log('🧪 Testing WebSocket URL:', url);
-    
-    try {
-      const testWs = new WebSocket(url);
-      
-      const timeout = setTimeout(() => {
-        if (testWs.readyState === WebSocket.CONNECTING) {
-          console.log('⏰ Connection timeout for:', url);
-          testWs.close();
-        }
-      }, 10000); // 10 second timeout
-      
-      testWs.onopen = () => {
-        clearTimeout(timeout);
-        console.log('✅ Successfully connected to:', url);
-        testWs.close(1000, 'Test completed');
-      };
-      
-      testWs.onerror = (error) => {
-        clearTimeout(timeout);
-        console.log('❌ Failed to connect to:', url);
-        console.log('Error:', error);
-      };
-      
-      testWs.onclose = (event) => {
-        console.log('🔌 Test connection closed for:', url, 'Code:', event.code, 'Reason:', event.reason);
-      };
-      
-    } catch (error) {
-      console.error('❌ Error testing WebSocket URL:', url, error);
-    }
-  }, []);
-
-  // Expose testWebSocket to global scope for testing
-  useEffect(() => {
-    window.testTouristWebSocket = testWebSocket;
-    window.testWebSocketURL = testWebSocketURL;
-    
-    // Add some helpful debug functions
-    window.getWebSocketState = () => {
-      if (wsRef.current) {
-        const states = ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'];
-        return {
-          readyState: wsRef.current.readyState,
-          readyStateName: states[wsRef.current.readyState],
-          url: wsRef.current.url,
-          protocol: wsRef.current.protocol,
-          connected: wsConnected
-        };
-      }
-      return { state: 'NO_CONNECTION', connected: wsConnected };
-    };
-    
-    window.reconnectWebSocket = () => {
-      if (wsRef.current) {
-        console.log('🔄 Manually closing current connection...');
-        wsRef.current.close(1000, 'Manual reconnection');
-      }
-      console.log('🔄 Manually triggering reconnection...');
-      // The onclose handler will automatically reconnect
-    };
-    
-    // Add function to send test data
-    window.sendTestMessage = (type = 'test') => {
-      const testMessages = {
-        test: {
-          type: 'test',
-          data: 'Hello from Tourist Activity Dashboard!',
-          timestamp: new Date().toISOString()
-        },
-        sos: {
-          type: 'dashboard_update',
-          data: {
-            type: 'SOS',
-            aadhaar_number: 'TEST123456789',
-            latitude: 27.5860,
-            longitude: 91.8590,
-            timestamp: new Date().toISOString(),
-            location_name: 'Test Location'
-          }
-        },
-        geofence: {
-          type: 'dashboard_update',
-          data: {
-            aadhaar_number: 'TEST123456789',
-            latitude: 27.5860,
-            longitude: 91.8590,
-            geofence_breached: true,
-            timestamp: new Date().toISOString(),
-            location_name: 'Outside Geofence'
-          }
-        },
-        location: {
-          type: 'dashboard_update',
-          data: {
-            aadhaar_number: 'TEST123456789',
-            latitude: 27.5860 + (Math.random() - 0.5) * 0.01,
-            longitude: 91.8590 + (Math.random() - 0.5) * 0.01,
-            timestamp: new Date().toISOString(),
-            location_name: 'Moving Location'
-          }
-        }
-      };
-      
-      const message = testMessages[type] || testMessages.test;
-      return sendWebSocketMessage(message);
-    };
-    
-    // Show current live data
-    window.getLiveData = () => {
-      return {
-        wsConnected,
-        liveUpdates: liveUpdates.slice(0, 5),
-        alerts: alerts.slice(0, 3),
-        touristLocations: Object.fromEntries(touristLocations)
-      };
-    };
-    
-    return () => {
-      delete window.testTouristWebSocket;
-      delete window.testWebSocketURL;
-      delete window.getWebSocketState;
-      delete window.reconnectWebSocket;
-      delete window.sendTestMessage;
-      delete window.getLiveData;
-    };
-  }, [testWebSocket, testWebSocketURL, wsConnected, liveUpdates, alerts, touristLocations, sendWebSocketMessage]);
-
   // Initialize Leaflet map
   useEffect(() => {
-    // Request notification permission
-    if (Notification.permission === 'default') {
-      Notification.requestPermission().then(permission => {
-        console.log('Notification permission:', permission);
-      });
-    }
-    
-    // Load Leaflet CSS and JS dynamically
     const loadLeaflet = async () => {
       if (!window.L) {
         // Load Leaflet CSS
@@ -499,199 +331,13 @@ const TouristActivity = () => {
     };
   }, [filteredTourists, tourists, handleTouristClick, adminLocation]);
 
-  // WebSocket connection setup
-  useEffect(() => {
-    let reconnectTimeout = null;
-
-    const connect = () => {
-      console.log('🔄 Attempting to connect to WebSocket...');
-      
-      // Clear any existing connection
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
-
-      const ws = new WebSocket("wss://drishti-y8b6.onrender.com/dashboard");
-      wsRef.current = ws;
-
-      ws.onopen = () => {
-        console.log("✅ WebSocket connected successfully");
-        setWsConnected(true);
-        
-        // Clear any pending reconnection attempts
-        if (reconnectTimeout) {
-          clearTimeout(reconnectTimeout);
-          reconnectTimeout = null;
-        }
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          console.log("📨 Received WebSocket message:", event.data);
-          const message = JSON.parse(event.data);
-
-          if (message.type === "dashboard_update" && message.data) {
-            const data = message.data;
-            console.log("📊 Dashboard update received:", data);
-            
-            // Add to live updates
-            setLiveUpdates(prev => [{
-              id: Date.now(),
-              timestamp: new Date(),
-              type: 'dashboard_update',
-              data: data
-            }, ...prev.slice(0, 49)]); // Keep last 50 updates
-            
-            // Handle SOS alerts
-            if (data.type === "SOS") {
-              console.log("🚨 SOS Alert received:", data);
-              const alert = {
-                id: Date.now(),
-                type: "SOS",
-                userId: data.aadhaar_number,
-                location: { lat: data.latitude, lng: data.longitude },
-                timestamp: new Date(data.timestamp || Date.now()),
-                message: `SOS alert from user ${data.aadhaar_number}`,
-                severity: 'high'
-              };
-              setAlerts(prev => [alert, ...prev.slice(0, 19)]); // Keep last 20 alerts
-              
-              // Show browser notification if permissions granted
-              if (Notification.permission === 'granted') {
-                new Notification('🚨 SOS Alert', {
-                  body: `Emergency alert from tourist at ${data.latitude}, ${data.longitude}`,
-                  icon: '/dristi-icon.svg'
-                });
-              }
-            } 
-            // Handle geofence breaches
-            else if (data.geofence_breached) {
-              console.log("⚠️ Geofence breach detected:", data);
-              const alert = {
-                id: Date.now(),
-                type: "GEOFENCE_BREACH",
-                userId: data.aadhaar_number,
-                location: { lat: data.latitude, lng: data.longitude },
-                timestamp: new Date(data.timestamp || Date.now()),
-                message: `Tourist ${data.aadhaar_number} breached geofence`,
-                severity: 'medium'
-              };
-              setAlerts(prev => [alert, ...prev.slice(0, 19)]);
-              
-              if (Notification.permission === 'granted') {
-                new Notification('⚠️ Geofence Breach', {
-                  body: `Tourist has moved outside designated area`,
-                  icon: '/dristi-icon.svg'
-                });
-              }
-            }
-            // Handle tourist location updates
-            else if (data.aadhaar_number && data.latitude && data.longitude) {
-              console.log("📍 Tourist location update:", data);
-              setTouristLocations(prev => {
-                const newMap = new Map(prev);
-                newMap.set(data.aadhaar_number, {
-                  lat: data.latitude,
-                  lng: data.longitude,
-                  timestamp: new Date(data.timestamp || Date.now()),
-                  location_name: data.location_name || 'Unknown Location'
-                });
-                return newMap;
-              });
-            }
-          }
-          // Handle other message types
-          else if (message.type === "tourist_update") {
-            console.log("👤 Tourist activity update:", message.data);
-            setLiveUpdates(prev => [{
-              id: Date.now(),
-              timestamp: new Date(),
-              type: 'tourist_update',
-              data: message.data
-            }, ...prev.slice(0, 49)]);
-          }
-          else if (message.type === "connection_confirmed") {
-            console.log("✅ Connection confirmed by server:", message.data);
-          }
-          else {
-            console.log("📋 Other message type:", message.type, message);
-            setLiveUpdates(prev => [{
-              id: Date.now(),
-              timestamp: new Date(),
-              type: message.type || 'unknown',
-              data: message.data || message
-            }, ...prev.slice(0, 49)]);
-          }
-        } catch (err) {
-          console.error("❌ Error parsing WebSocket message:", err);
-          console.error("Raw message:", event.data);
-        }
-      };
-
-      ws.onclose = (event) => {
-        console.log("⚠️ WebSocket disconnected:", event.code, event.reason);
-        setWsConnected(false);
-        
-        // Only attempt reconnection if it wasn't a deliberate close
-        if (event.code !== 1000) {
-          console.log("🔄 Attempting to reconnect in 5 seconds...");
-          reconnectTimeout = setTimeout(() => {
-            if (wsRef.current === ws) { // Only reconnect if this is still the current connection
-              connect();
-            }
-          }, 5000);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error("❌ WebSocket error:", error);
-        setWsConnected(false);
-      };
-    };
-
-    // Initial connection
-    connect();
-
-    // Cleanup function
-    return () => {
-      console.log('🧹 Cleaning up WebSocket connection');
-      
-      // Clear any pending reconnection
-      if (reconnectTimeout) {
-        clearTimeout(reconnectTimeout);
-      }
-      
-      // Close connection
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        try {
-          wsRef.current.close(1000, 'Component unmounting');
-        } catch (closeError) {
-          console.warn('⚠️ Error closing WebSocket during cleanup:', closeError.message);
-        }
-      }
-      
-      wsRef.current = null;
-      setWsConnected(false);
-    };
-  }, []); // Empty dependency array - only run once on mount
-
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Tourist Activity</h1>
-          <div className="flex items-center gap-4 mt-1">
-            <p className="text-gray-600 text-sm sm:text-base">Monitor tourist registrations, logins, and real-time activity.</p>
-            {/* WebSocket Connection Status */}
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
-              <span className={`text-xs font-medium ${wsConnected ? 'text-green-600' : 'text-red-600'}`}>
-                {wsConnected ? 'Live Data' : 'Disconnected'}
-              </span>
-            </div>
-          </div>
+          <p className="text-gray-600 text-sm sm:text-base mt-1">Monitor tourist registrations, logins, and real-time activity.</p>
         </div>
         <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm">
           <Download className="w-4 h-4" />
@@ -699,6 +345,9 @@ const TouristActivity = () => {
           <span className="sm:hidden">Export</span>
         </button>
       </div>
+
+      {/* WebSocket Status */}
+      <WebSocketStatus showDetails={true} />
 
       {/* Location Status */}
       <LocationStatus />

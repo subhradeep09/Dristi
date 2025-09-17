@@ -144,7 +144,7 @@ const HeroSection = () => {
               </span>{' '}
               neural network with quantum-encrypted{' '}
               <span className="text-purple-300 font-bold relative">
-                biometric tracking
+                live GPS tracking
                 <span className="absolute -inset-1 bg-purple-400/20 blur-sm rounded animate-pulse"></span>
               </span>, predictive{' '}
               <span className="text-pink-300 font-bold relative">

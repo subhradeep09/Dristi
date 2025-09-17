@@ -1,37 +1,97 @@
-import React, { useState } from 'react';
-import { Download, AlertTriangle, Clock, CheckCircle, Search, Users, MapPin } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Download, AlertTriangle, Clock, CheckCircle, Search, Users, MapPin, Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import StatCard from './StatCard';
+import LoadingSpinner from '../LoadingSpinner';
+import { useData } from '../../contexts/useData';
+import { useWebSocket } from '../../contexts/useWebSocket';
 
 const SOSHits = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('today');
+  const [refreshing, setRefreshing] = useState(false);
 
+  // Get data from contexts
+  const { 
+    sosAlerts, 
+    refreshData, 
+    updateSOSAlert,
+    globalLoading,
+    errors 
+  } = useData();
+  
+  const { 
+    wsConnected, 
+    alerts: wsAlerts, 
+    liveUpdates 
+  } = useWebSocket();
+
+  // Refresh SOS data on component mount
+  useEffect(() => {
+    refreshData(['sosAlerts']);
+  }, [refreshData]);
+
+  // Handle manual refresh
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refreshData(['sosAlerts']);
+    setRefreshing(false);
+  };
+
+  // Handle SOS alert status update
+  const handleStatusUpdate = async (alertId, newStatus) => {
+    try {
+      await updateSOSAlert(alertId, { status: newStatus });
+      // Data will automatically refresh
+    } catch (error) {
+      console.error('Failed to update SOS alert:', error);
+    }
+  };
+
+  // Combine API SOS alerts with WebSocket alerts
+  const allSOSAlerts = [
+    ...sosAlerts.recent || [],
+    ...wsAlerts.filter(alert => alert.type === 'SOS').map(wsAlert => ({
+      id: `ws-${wsAlert.timestamp}`,
+      touristId: wsAlert.aadhaar_number || 'Unknown',
+      name: wsAlert.name || 'Unknown Tourist',
+      avatar: wsAlert.name ? wsAlert.name.split(' ').map(n => n[0]).join('').substring(0, 2) : 'UT',
+      location: wsAlert.location_name || 'Unknown Location',
+      alertTime: new Date(wsAlert.timestamp).toLocaleTimeString(),
+      status: 'pending',
+      severity: 'high',
+      coordinates: `${wsAlert.latitude}°N, ${wsAlert.longitude}°E`,
+      isRealTime: true
+    }))
+  ];
+
+  // Calculate dynamic stats from real data
   const stats = [
     {
       title: 'Total SOS Alerts',
-      value: '124',
+      value: globalLoading ? '...' : allSOSAlerts.length.toString(),
       icon: AlertTriangle,
       color: 'red',
-      subtitle: 'Last 30 days'
+      subtitle: 'All time'
     },
     {
       title: 'Pending Response',
-      value: '23',
+      value: globalLoading ? '...' : allSOSAlerts.filter(alert => alert.status === 'pending').length.toString(),
       icon: Clock,
       color: 'yellow',
       subtitle: 'Requires attention'
     },
     {
       title: 'Resolved Cases',
-      value: '101',
+      value: globalLoading ? '...' : allSOSAlerts.filter(alert => alert.status === 'resolved').length.toString(),
       icon: CheckCircle,
       color: 'green',
       subtitle: 'Successfully handled'
     }
   ];
 
-  const sosAlerts = [
+  // Fallback SOS alerts for when API data is not available
+  const fallbackSOSAlerts = [
     {
       id: 1,
       touristId: 'TG001234',
@@ -89,6 +149,9 @@ const SOSHits = () => {
     }
   ];
 
+  // Use API data if available, otherwise fallback data
+  const displayAlerts = allSOSAlerts.length > 0 ? allSOSAlerts : fallbackSOSAlerts;
+
   const getStatusBadge = (status) => {
     const styles = {
       pending: 'bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium',
@@ -107,7 +170,7 @@ const SOSHits = () => {
     return styles[severity] || styles.medium;
   };
 
-  const filteredAlerts = sosAlerts.filter(alert => {
+  const filteredAlerts = displayAlerts.filter(alert => {
     const matchesSearch = alert.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       alert.touristId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       alert.location.toLowerCase().includes(searchTerm.toLowerCase());
@@ -120,19 +183,55 @@ const SOSHits = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">SOS Alerts</h1>
-          <p className="text-gray-600 mt-1 text-sm sm:text-base">Monitor and respond to emergency alerts from tourists.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+            SOS Alerts
+            {wsConnected ? (
+              <Wifi className="inline-block w-5 h-5 text-green-500 ml-2" title="WebSocket Connected" />
+            ) : (
+              <WifiOff className="inline-block w-5 h-5 text-red-500 ml-2" title="WebSocket Disconnected" />
+            )}
+          </h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">
+            Monitor and respond to emergency alerts from tourists.
+            {allSOSAlerts.some(alert => alert.isRealTime) && (
+              <span className="text-green-600 font-medium ml-2">
+                ({allSOSAlerts.filter(alert => alert.isRealTime).length} real-time)
+              </span>
+            )}
+          </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
-          <button className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm">
+          <button 
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm"
+            onClick={() => {
+              const dataStr = JSON.stringify(filteredAlerts, null, 2);
+              const blob = new Blob([dataStr], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `sos-alerts-${new Date().toISOString().slice(0,10)}.json`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+          >
             <Download className="w-4 h-4" />
             <span className="hidden sm:inline">Export Report</span>
             <span className="sm:hidden">Export</span>
           </button>
-          <button className="bg-red-600 hover:bg-red-700 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm">
-            <AlertTriangle className="w-4 h-4" />
-            <span className="hidden sm:inline">Enable Alerts</span>
-            <span className="sm:hidden">Alerts</span>
+          <button 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm disabled:opacity-50"
+            onClick={handleRefresh}
+            disabled={refreshing || globalLoading}
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing || globalLoading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">
+              {refreshing || globalLoading ? 'Refreshing...' : 'Refresh'}
+            </span>
+            <span className="sm:hidden">
+              {refreshing || globalLoading ? 'Loading...' : 'Refresh'}
+            </span>
           </button>
         </div>
       </div>
@@ -280,13 +379,38 @@ const SOSHits = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex gap-2">
-                        <button className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded transition-colors">
+                        <button 
+                          className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded transition-colors"
+                          onClick={() => {
+                            // Open location in new tab
+                            const [lat, lng] = alert.coordinates.split(',').map(coord => 
+                              parseFloat(coord.replace(/[^\d.-]/g, ''))
+                            );
+                            window.open(`https://www.google.com/maps/@${lat},${lng},15z`, '_blank');
+                          }}
+                        >
                           View
                         </button>
                         {alert.status === 'pending' && (
-                          <button className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-3 py-1 rounded transition-colors">
+                          <button 
+                            className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-3 py-1 rounded transition-colors"
+                            onClick={() => handleStatusUpdate(alert.id, 'responded')}
+                          >
                             Respond
                           </button>
+                        )}
+                        {alert.status === 'responded' && (
+                          <button 
+                            className="text-purple-600 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 px-3 py-1 rounded transition-colors"
+                            onClick={() => handleStatusUpdate(alert.id, 'resolved')}
+                          >
+                            Resolve
+                          </button>
+                        )}
+                        {alert.isRealTime && (
+                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                            🔴 LIVE
+                          </span>
                         )}
                       </div>
                     </td>
@@ -332,12 +456,32 @@ const SOSHits = () => {
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-gray-500">{alert.alertTime}</div>
                     <div className="flex gap-2">
-                      <button className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded transition-colors text-sm">
+                      <button 
+                        className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-3 py-1 rounded transition-colors text-sm"
+                        onClick={() => {
+                          // Open location in new tab
+                          const [lat, lng] = alert.coordinates.split(',').map(coord => 
+                            parseFloat(coord.replace(/[^\d.-]/g, ''))
+                          );
+                          window.open(`https://www.google.com/maps/@${lat},${lng},15z`, '_blank');
+                        }}
+                      >
                         View
                       </button>
                       {alert.status === 'pending' && (
-                        <button className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-3 py-1 rounded transition-colors text-sm">
+                        <button 
+                          className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-3 py-1 rounded transition-colors text-sm"
+                          onClick={() => handleStatusUpdate(alert.id, 'responded')}
+                        >
                           Respond
+                        </button>
+                      )}
+                      {alert.status === 'responded' && (
+                        <button 
+                          className="text-purple-600 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 px-3 py-1 rounded transition-colors text-sm"
+                          onClick={() => handleStatusUpdate(alert.id, 'resolved')}
+                        >
+                          Resolve
                         </button>
                       )}
                     </div>
@@ -353,7 +497,8 @@ const SOSHits = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="text-sm text-gray-700 text-center sm:text-left">
               Showing <span className="font-medium">1</span> to <span className="font-medium">{filteredAlerts.length}</span> of{' '}
-              <span className="font-medium">{sosAlerts.length}</span> results
+              <span className="font-medium">{displayAlerts.length}</span> results
+              {globalLoading && <LoadingSpinner />}
             </div>
             <div className="flex justify-center sm:justify-end gap-1 overflow-x-auto">
               <button className="px-3 py-1 text-sm border border-gray-200 rounded hover:bg-gray-50 whitespace-nowrap">

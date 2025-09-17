@@ -1,9 +1,20 @@
-import React, { useState } from 'react';
-import { Send, Users, MessageSquare, Clock, CheckCircle, AlertTriangle, Filter, Search, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Send, Users, MessageSquare, Clock, CheckCircle, AlertTriangle, Filter, Search, Download, RefreshCw, Wifi, WifiOff } from 'lucide-react';
+import LoadingSpinner from '../LoadingSpinner';
+import { useData } from '../../contexts/useData';
+import { useWebSocket } from '../../contexts/useWebSocket';
 import { useBroadcast } from '../../contexts/BroadcastContext';
 
 const SMSBroadcast = () => {
   const { broadcastHistory, addBroadcast } = useBroadcast();
+  const { 
+    broadcastHistory: apiBroadcastHistory, 
+    tourists,
+    sendBroadcast,
+    refreshData,
+    globalLoading 
+  } = useData();
+  const { wsConnected } = useWebSocket();
   
   const [broadcastData, setBroadcastData] = useState({
     message: '',
@@ -16,15 +27,30 @@ const SMSBroadcast = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Sample tourist data for recipient selection
-  const tourists = [
+  // Fetch broadcast history and tourists on mount
+  useEffect(() => {
+    refreshData(['broadcastHistory', 'tourists']);
+  }, [refreshData]);
+
+  // Handle manual refresh
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refreshData(['broadcastHistory', 'tourists']);
+    setRefreshing(false);
+  };
+
+  // Use API tourist data if available, otherwise fallback
+  const fallbackTourists = [
     { id: 'TG001234', name: 'John Smith', location: 'Mount Everest Base', status: 'online' },
     { id: 'TG001235', name: 'Sarah Johnson', location: 'Tiger Reserve Zone', status: 'online' },
     { id: 'TG001236', name: 'Mike Chen', location: 'Border Area 7', status: 'offline' },
     { id: 'TG001237', name: 'Emma Davis', location: 'Wildlife Sanctuary', status: 'online' },
     { id: 'TG001238', name: 'Alex Kumar', location: 'Valley Trek Route', status: 'online' }
   ];
+
+  const currentTourists = tourists.data.length > 0 ? tourists.data : fallbackTourists;
 
   const handleInputChange = (field, value) => {
     setBroadcastData(prev => ({
@@ -51,42 +77,63 @@ const SMSBroadcast = () => {
 
     setIsSending(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      // Add broadcast to context
-      const newBroadcast = {
-        id: Date.now(),
-        icon: MessageSquare,
-        title: `${broadcastData.priority.charAt(0).toUpperCase() + broadcastData.priority.slice(1)} Priority Broadcast`,
+    try {
+      // Use API service to send broadcast
+      const response = await sendBroadcast({
         message: broadcastData.message,
-        time: 'Just now',
+        recipients: broadcastData.recipients,
         priority: broadcastData.priority,
-        recipientsCount: getRecipientCount(),
-        status: 'delivered',
-        sentAt: 'Just now',
-        deliveryRate: 98.5
-      };
-      
-      addBroadcast(newBroadcast);
-      
-      setIsSending(false);
-      alert('Broadcast sent successfully!');
-      setBroadcastData({
-        message: '',
-        recipients: 'all',
-        priority: 'medium',
-        scheduleType: 'now'
+        recipientsList: selectedTourists,
+        scheduleType: broadcastData.scheduleType
       });
-      setSelectedTourists([]);
-    }, 2000);
+
+      if (response.success) {
+        alert('Broadcast sent successfully!');
+        
+        // Also add to local context for immediate UI update
+        const newBroadcast = {
+          id: Date.now(),
+          icon: MessageSquare,
+          title: `${broadcastData.priority.charAt(0).toUpperCase() + broadcastData.priority.slice(1)} Priority Broadcast`,
+          message: broadcastData.message,
+          time: 'Just now',
+          priority: broadcastData.priority,
+          recipientsCount: getRecipientCount(),
+          status: 'delivered',
+          sentAt: 'Just now',
+          deliveryRate: 98.5
+        };
+        
+        addBroadcast(newBroadcast);
+        
+        // Reset form
+        setBroadcastData({
+          message: '',
+          recipients: 'all',
+          priority: 'medium',
+          scheduleType: 'now'
+        });
+        setSelectedTourists([]);
+        
+        // Refresh broadcast history
+        await handleRefresh();
+      } else {
+        alert(`Failed to send broadcast: ${response.error}`);
+      }
+    } catch (error) {
+      console.error('Error sending broadcast:', error);
+      alert('Failed to send broadcast. Please try again.');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const getRecipientCount = () => {
     switch (broadcastData.recipients) {
       case 'all':
-        return tourists.length;
+        return currentTourists.length;
       case 'online':
-        return tourists.filter(t => t.status === 'online').length;
+        return currentTourists.filter(t => t.status === 'online').length;
       case 'selected':
         return selectedTourists.length;
       default:
@@ -112,7 +159,7 @@ const SMSBroadcast = () => {
     return styles[status] || styles.delivered;
   };
 
-  const filteredTourists = tourists.filter(tourist =>
+  const filteredTourists = currentTourists.filter(tourist =>
     tourist.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     tourist.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -122,10 +169,33 @@ const SMSBroadcast = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">SMS Broadcast</h1>
-          <p className="text-gray-600 mt-1 text-sm sm:text-base">Send SMS messages to tourists for alerts and updates</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+            SMS Broadcast
+            {wsConnected ? (
+              <Wifi className="inline-block w-5 h-5 text-green-500 ml-2" title="WebSocket Connected" />
+            ) : (
+              <WifiOff className="inline-block w-5 h-5 text-red-500 ml-2" title="WebSocket Disconnected" />
+            )}
+          </h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">
+            Send SMS messages to tourists for alerts and updates
+            {globalLoading && <LoadingSpinner />}
+          </p>
         </div>
         <div className="flex gap-3">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing || globalLoading}
+            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing || globalLoading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">
+              {refreshing || globalLoading ? 'Refreshing...' : 'Refresh'}
+            </span>
+            <span className="sm:hidden">
+              {refreshing || globalLoading ? 'Loading...' : 'Refresh'}
+            </span>
+          </button>
           <button
             onClick={() => setShowHistory(!showHistory)}
             className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors text-sm"
@@ -348,8 +418,9 @@ const SMSBroadcast = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {broadcastHistory.map((broadcast) => (
-                    <tr key={broadcast.id} className="hover:bg-gray-50">
+                  {/* Combine API broadcast history with local context history */}
+                  {[...(apiBroadcastHistory?.data || []), ...broadcastHistory].map((broadcast, index) => (
+                    <tr key={broadcast.id || index} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <p className="text-sm text-gray-900 line-clamp-2">{broadcast.message}</p>
                       </td>
@@ -370,7 +441,7 @@ const SMSBroadcast = () => {
                         {broadcast.deliveryRate || 98.5}%
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {broadcast.time || broadcast.sentAt || 'N/A'}
+                        {broadcast.time || broadcast.sentAt || broadcast.timestamp || 'N/A'}
                       </td>
                     </tr>
                   ))}
@@ -380,8 +451,8 @@ const SMSBroadcast = () => {
 
             {/* Mobile View */}
             <div className="md:hidden space-y-4 p-4">
-              {broadcastHistory.map((broadcast) => (
-                <div key={broadcast.id} className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+              {[...(apiBroadcastHistory?.data || []), ...broadcastHistory].map((broadcast, index) => (
+                <div key={broadcast.id || index} className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
                   <div className="flex justify-between items-start">
                     <p className="text-sm text-gray-900 flex-1 pr-2">{broadcast.message}</p>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityBadge(broadcast.priority)} whitespace-nowrap`}>

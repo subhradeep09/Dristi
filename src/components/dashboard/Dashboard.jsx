@@ -1,38 +1,53 @@
 import React from 'react';
 import { Users, UserCheck, Users2, AlertTriangle, MapPin, TrendingUp, Settings, Eye, Radio, Clock, MessageSquare } from 'lucide-react';
 import { useBroadcast } from '../../contexts/BroadcastContext';
+import { useWebSocket } from '../../contexts/useWebSocket';
+import { useData } from '../../contexts/useData';
 import StatCard from './StatCard';
+import WebSocketStatus from './WebSocketStatus';
 
 const Dashboard = () => {
   const { broadcastHistory } = useBroadcast();
-  // Sample data
+  const { wsConnected, liveUpdates, alerts, getRecentAlerts } = useWebSocket();
+  const { 
+    dashboardStats, 
+    sosAlerts,
+    globalLoading, 
+    refreshAllData,
+    errors 
+  } = useData();
+  
+  // Get real-time data from WebSocket
+  const recentWebSocketAlerts = getRecentAlerts(5);
+  
+  // Use API data with WebSocket real-time updates
   const stats = [
     {
       title: 'Total Registered',
-      value: '12,847',
+      value: dashboardStats.loading ? '...' : dashboardStats.totalRegistered?.toLocaleString() || '0',
       icon: Users,
       color: 'blue',
-      subtitle: '+234 this week',
+      subtitle: dashboardStats.loading ? 'Loading...' : '+234 this week',
       trend: { type: 'up', value: '12%' }
     },
     {
       title: 'Active Today',
-      value: '2,341',
+      value: dashboardStats.loading ? '...' : dashboardStats.activeToday?.toLocaleString() || '0',
       icon: UserCheck,
       color: 'green',
-      subtitle: '+15% from yesterday',
+      subtitle: dashboardStats.loading ? 'Loading...' : '+15% from yesterday',
       trend: { type: 'up', value: '15%' }
     },
     {
       title: 'Currently Online',
-      value: '847',
+      value: dashboardStats.loading ? '...' : dashboardStats.currentlyOnline?.toLocaleString() || '0',
       icon: Users2,
       color: 'purple',
       subtitle: 'Real-time count'
     },
     {
       title: 'SOS Alerts',
-      value: '23',
+      value: dashboardStats.loading ? '...' : dashboardStats.sosAlerts?.toString() || '0',
       icon: AlertTriangle,
       color: 'red',
       subtitle: 'Last 24 hours',
@@ -40,48 +55,20 @@ const Dashboard = () => {
     }
   ];
 
-  const recentAlerts = [
-    {
-      id: 1,
-      name: 'John Smith',
-      location: 'Mount Everest Base',
-      time: '2 mins ago',
-      status: 'pending',
-      avatar: 'JS'
-    },
-    {
-      id: 2,
-      name: 'Sarah Johnson',
-      location: 'Tiger Reserve Zone',
-      time: '15 mins ago',
-      status: 'responded',
-      avatar: 'SJ'
-    },
-    {
-      id: 3,
-      name: 'Mike Chen',
-      location: 'Border Area 7',
-      time: '1 hour ago',
-      status: 'resolved',
-      avatar: 'MC'
-    },
-    {
-      id: 4,
-      name: 'Emma Davis',
-      location: 'Restricted Valley',
-      time: '2 hours ago',
-      status: 'pending',
-      avatar: 'ED'
-    },
-    {
-      id: 5,
-      name: 'Alex Kumar',
-      location: 'Wildlife Sanctuary',
-      time: '3 hours ago',
-      status: 'resolved',
-      avatar: 'AK'
-    }
-  ];
+  // Combine API alerts with real-time WebSocket alerts
+  const recentAlerts = sosAlerts.loading ? [] : [
+    ...(sosAlerts.recent || []).slice(0, 3),
+    ...recentWebSocketAlerts.slice(0, 2)
+  ].slice(0, 5).map((alert, index) => ({
+    id: alert.id || index,
+    name: alert.userId || alert.name || `User ${alert.id}`,
+    location: alert.location?.name || alert.location || 'Unknown Location',
+    time: alert.timestamp ? new Date(alert.timestamp).toLocaleString() : 'Unknown',
+    status: alert.status || 'pending',
+    avatar: alert.userId?.substring(0, 2).toUpperCase() || alert.name?.substring(0, 2).toUpperCase() || 'UN',
+    type: alert.type,
+    severity: alert.severity
+  }));
 
   const quickActions = [
     { 
@@ -130,6 +117,62 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
+      {/* WebSocket Status and Data Management */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h3 className="text-lg font-semibold text-gray-900">System Status</h3>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+              <span className={`text-sm font-medium ${wsConnected ? 'text-green-600' : 'text-red-600'}`}>
+                {wsConnected ? 'Live Data Connected' : 'Connection Lost'}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <span>Live Updates: {liveUpdates.length}</span>
+              <span>Active Alerts: {alerts.length}</span>
+              {globalLoading && <span className="text-blue-600">Refreshing...</span>}
+            </div>
+            <button 
+              onClick={refreshAllData}
+              disabled={globalLoading}
+              className={`px-3 py-1 text-sm rounded transition-colors ${
+                globalLoading 
+                  ? 'bg-gray-200 text-gray-500 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
+            >
+              {globalLoading ? 'Refreshing...' : 'Refresh Data'}
+            </button>
+          </div>
+        </div>
+        
+        {/* Error States */}
+        {Object.keys(errors).length > 0 && (
+          <div className="mt-4 p-3 bg-red-50 rounded-lg">
+            <p className="text-sm text-red-800 font-medium">Data Loading Errors:</p>
+            {Object.entries(errors).map(([key, error]) => (
+              <p key={key} className="text-xs text-red-600 mt-1">
+                {key}: {error}
+              </p>
+            ))}
+          </div>
+        )}
+        
+        {recentWebSocketAlerts.length > 0 && (
+          <div className="mt-4 p-3 bg-red-50 rounded-lg">
+            <p className="text-sm text-red-800 font-medium">
+              Latest Alert: {recentWebSocketAlerts[0].message}
+            </p>
+            <p className="text-xs text-red-600 mt-1">
+              {recentWebSocketAlerts[0].timestamp.toLocaleString()}
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (

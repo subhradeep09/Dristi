@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit2, Trash2, MapPin, Shield, AlertTriangle, Save, X } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, MapPin, Shield, AlertTriangle, Save, X, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { MapContainer, TileLayer, Polygon, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import LocationStatus from './LocationStatus';
+import LoadingSpinner from '../LoadingSpinner';
 import { useLocation } from '../../contexts/useLocation';
+import { useData } from '../../contexts/useData';
+import { useWebSocket } from '../../contexts/useWebSocket';
 
 // Fix for default markers in Leaflet with React
 delete L.Icon.Default.prototype._getIconUrl;
@@ -36,7 +39,18 @@ const GeoFencing = () => {
   const [selectedZoneId, setSelectedZoneId] = useState(null);
   const [mapCenter, setMapCenter] = useState([26.2006, 92.9376]); // Default to Guwahati
   const [mapZoom, setMapZoom] = useState(7);
+  const [refreshing, setRefreshing] = useState(false);
+
   const { adminLocation } = useLocation();
+  const { 
+    geofences, 
+    createGeofence, 
+    updateGeofence, 
+    deleteGeofence, 
+    refreshData,
+    globalLoading 
+  } = useData();
+  const { wsConnected, alerts: wsAlerts } = useWebSocket();
 
   // Update map center when admin location is available
   useEffect(() => {
@@ -57,7 +71,28 @@ const GeoFencing = () => {
     description: '',
     coordinates: []
   });
-  const [zones, setZones] = useState([
+  // Fetch geofences on component mount
+  useEffect(() => {
+    refreshData(['geofences']);
+  }, [refreshData]);
+
+  // Handle manual refresh
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await refreshData(['geofences']);
+    setRefreshing(false);
+  };
+
+  // Count geofence violations from WebSocket alerts
+  const getViolationCount = (geofenceId) => {
+    return wsAlerts.filter(alert => 
+      alert.type === 'geofence_breach' && 
+      alert.geofenceId === geofenceId
+    ).length;
+  };
+
+  // Fallback zones data when API is not available
+  const fallbackZones = [
     {
       id: 1,
       name: 'Wildlife Sanctuary',
@@ -122,7 +157,15 @@ const GeoFencing = () => {
         [28.2280, 84.0056]
       ]
     }
-  ]);
+  ];
+
+  // Use API data if available, otherwise fallback data
+  const zones = geofences.data.length > 0 
+    ? geofences.data.map(zone => ({
+        ...zone,
+        violations: getViolationCount(zone.id) // Add real-time violation count
+      }))
+    : fallbackZones;
 
   // Component for handling map clicks when in drawing mode
   const DrawingHandler = () => {
@@ -189,24 +232,29 @@ const GeoFencing = () => {
   };
 
   // Handle saving new zone
-  const saveNewZone = () => {
+  const saveNewZone = async () => {
     if (newZoneData.name && newZoneData.coordinates.length >= 3) {
-      const newZone = {
-        id: zones.length + 1,
-        name: newZoneData.name,
-        type: newZoneData.type,
-        status: 'Active',
-        created: new Date().toISOString().split('T')[0],
-        violations: 0,
-        coordinates: `${newZoneData.coordinates[0][0].toFixed(4)}°N, ${newZoneData.coordinates[0][1].toFixed(4)}°E`,
-        description: newZoneData.description,
-        polygon: newZoneData.coordinates
-      };
-      
-      // Add new zone at the beginning of the array (top of table)
-      setZones(prev => [newZone, ...prev]);
-      cancelDrawing();
-      alert('Zone added successfully!');
+      try {
+        const newZone = {
+          name: newZoneData.name,
+          type: newZoneData.type,
+          description: newZoneData.description,
+          coordinates: newZoneData.coordinates,
+          status: 'Active'
+        };
+        
+        const response = await createGeofence(newZone);
+        if (response.success) {
+          cancelDrawing();
+          alert('Zone added successfully!');
+          await handleRefresh(); // Refresh the zones list
+        } else {
+          alert(`Failed to create geofence: ${response.error}`);
+        }
+      } catch (error) {
+        console.error('Error creating geofence:', error);
+        alert('Failed to create geofence. Please try again.');
+      }
     } else {
       alert('Please fill in all required fields and ensure the zone has at least 3 points');
     }
@@ -240,11 +288,21 @@ const GeoFencing = () => {
   };
 
   // Confirm delete zone
-  const confirmDeleteZone = () => {
-    setZones(prev => prev.filter(zone => zone.id !== selectedZoneId));
-    setShowDeleteConfirm(false);
-    setSelectedZoneId(null);
-    alert('Zone deleted successfully!');
+  const confirmDeleteZone = async () => {
+    try {
+      const response = await deleteGeofence(selectedZoneId);
+      if (response.success) {
+        setShowDeleteConfirm(false);
+        setSelectedZoneId(null);
+        alert('Zone deleted successfully!');
+        await handleRefresh(); // Refresh the zones list
+      } else {
+        alert(`Failed to delete geofence: ${response.error}`);
+      }
+    } catch (error) {
+      console.error('Error deleting geofence:', error);
+      alert('Failed to delete geofence. Please try again.');
+    }
   };
 
   // Cancel confirmation dialogs
@@ -255,22 +313,28 @@ const GeoFencing = () => {
   };
 
   // Handle saving edited zone
-  const saveEditedZone = () => {
+  const saveEditedZone = async () => {
     if (editZoneData.name.trim()) {
-      setZones(prev => prev.map(zone => 
-        zone.id === selectedZoneId 
-          ? { 
-              ...zone, 
-              name: editZoneData.name,
-              type: editZoneData.type,
-              description: editZoneData.description
-            }
-          : zone
-      ));
-      setShowEditModal(false);
-      setSelectedZoneId(null);
-      setEditZoneData({ name: '', type: 'Restricted', description: '' });
-      alert('Zone updated successfully!');
+      try {
+        const response = await updateGeofence(selectedZoneId, {
+          name: editZoneData.name,
+          type: editZoneData.type,
+          description: editZoneData.description
+        });
+        
+        if (response.success) {
+          setShowEditModal(false);
+          setSelectedZoneId(null);
+          setEditZoneData({ name: '', type: 'Restricted', description: '' });
+          alert('Zone updated successfully!');
+          await handleRefresh(); // Refresh the zones list
+        } else {
+          alert(`Failed to update geofence: ${response.error}`);
+        }
+      } catch (error) {
+        console.error('Error updating geofence:', error);
+        alert('Failed to update geofence. Please try again.');
+      }
     } else {
       alert('Please enter a zone name');
     }
@@ -340,10 +404,28 @@ const GeoFencing = () => {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Geo-Fencing Zones</h1>
-          <p className="text-gray-600 mt-1">Manage and monitor restricted areas and tourist movement boundaries.</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Geo-Fencing Zones
+            {wsConnected ? (
+              <Wifi className="inline-block w-5 h-5 text-green-500 ml-2" title="WebSocket Connected" />
+            ) : (
+              <WifiOff className="inline-block w-5 h-5 text-red-500 ml-2" title="WebSocket Disconnected" />
+            )}
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Manage and monitor restricted areas and tourist movement boundaries.
+            {globalLoading && <LoadingSpinner />}
+          </p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing || globalLoading}
+            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing || globalLoading ? 'animate-spin' : ''}`} />
+            {refreshing || globalLoading ? 'Refreshing...' : 'Refresh'}
+          </button>
           {showConfirmDrawing && (
             <>
               <button 

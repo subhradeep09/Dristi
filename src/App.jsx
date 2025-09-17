@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { BroadcastProvider } from './contexts/BroadcastContext';
 import { LocationProvider } from './contexts/LocationContext';
+import { WebSocketProvider } from './contexts/WebSocketContext';
+import { DataProvider } from './contexts/DataContext';
 import LandingPage from './components/LandingPage';
 import AdminLogin from './components/adminlogin/AdminLogin';
 import Dashboard from './components/dashboard/Dashboard';
@@ -17,8 +19,10 @@ const App = () => {
   return (
     <LocationProvider>
       <BroadcastProvider>
-        <Router>
-        <Routes>
+        <WebSocketProvider>
+          <DataProvider>
+            <Router>
+          <Routes>
         {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
         
@@ -79,6 +83,8 @@ const App = () => {
         />
       </Routes>
       </Router>
+      </DataProvider>
+    </WebSocketProvider>
     </BroadcastProvider>
     </LocationProvider>
   );
